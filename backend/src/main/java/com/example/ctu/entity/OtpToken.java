@@ -7,6 +7,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -37,12 +39,14 @@ public class OtpToken {
     private String token;
 
     @Column(name = "expires_at", nullable = false)
+    @JdbcTypeCode(SqlTypes.TIMESTAMP)
     private Instant expiresAt;
 
     @Column(nullable = false)
     private boolean used;
 
     @Column(name = "created_at", nullable = false, updatable = false)
+    @JdbcTypeCode(SqlTypes.TIMESTAMP)
     private Instant createdAt;
 
     @SuppressWarnings("unused")

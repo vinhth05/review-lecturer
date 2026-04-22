@@ -7,6 +7,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -37,6 +39,7 @@ public class Faculty {
     private String code;
 
     @Column(name = "created_at", nullable = false, updatable = false)
+    @JdbcTypeCode(SqlTypes.TIMESTAMP)
     private Instant createdAt;
 
     @PrePersist

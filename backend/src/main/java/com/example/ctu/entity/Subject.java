@@ -9,6 +9,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -43,6 +45,7 @@ public class Subject {
     private Faculty faculty;
 
     @Column(name = "created_at", nullable = false, updatable = false)
+    @JdbcTypeCode(SqlTypes.TIMESTAMP)
     private Instant createdAt;
 
     @PrePersist

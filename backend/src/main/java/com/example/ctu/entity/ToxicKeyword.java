@@ -1,5 +1,11 @@
 package com.example.ctu.entity;
 
+import java.time.Instant;
+import java.util.UUID;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -7,9 +13,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-
-import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "toxic_keywords")
@@ -23,6 +26,7 @@ public class ToxicKeyword {
     private String keyword;
 
     @Column(name = "created_at", nullable = false, updatable = false)
+    @JdbcTypeCode(SqlTypes.TIMESTAMP)
     private Instant createdAt;
 
     public ToxicKeyword() {
@@ -58,6 +62,7 @@ public class ToxicKeyword {
         this.createdAt = createdAt;
     }
 
+    @SuppressWarnings("unused")
     @PrePersist
     void prePersist() {
         if (createdAt == null) {

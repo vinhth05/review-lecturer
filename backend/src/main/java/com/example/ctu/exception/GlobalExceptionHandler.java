@@ -25,7 +25,7 @@ public class GlobalExceptionHandler {
                 ? validationException.getBindingResult().getFieldErrors().stream()
                 .map(fieldError -> fieldError.getField() + " " + fieldError.getDefaultMessage())
                 .collect(Collectors.joining(", "))
-                : exception.getMessage();
+                : exception.getMessage() != null ? exception.getMessage() : "Yêu cầu không hợp lệ";
         return ResponseEntity.badRequest().body(new ApiError(message, Instant.now()));
     }
 
