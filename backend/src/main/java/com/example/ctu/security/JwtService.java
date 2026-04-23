@@ -12,7 +12,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
 public class JwtService {
@@ -23,11 +22,11 @@ public class JwtService {
         this.properties = properties;
     }
 
-    public String generateToken(UUID userId, String email, String role) {
+    public String generateToken(Long userId, String email, String role) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(email)
-                .claims(Map.of("uid", userId.toString(), "role", role))
+                .claims(Map.of("uid", userId, "role", role))
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(properties.jwt().expirationMinutes(), ChronoUnit.MINUTES)))
                 .signWith(getKey())

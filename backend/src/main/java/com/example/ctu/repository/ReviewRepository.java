@@ -6,29 +6,28 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
-public interface ReviewRepository extends JpaRepository<Review, UUID> {
-    List<Review> findByLecturer_IdAndApprovedOrderByCreatedAtDesc(UUID lecturerId, boolean approved);
+public interface ReviewRepository extends JpaRepository<Review, Long> {
+    List<Review> findByLecturer_IdAndApprovedOrderByCreatedAtDesc(Long lecturerId, boolean approved);
     List<Review> findByApprovedFalseOrderByCreatedAtDesc();
     long countByAnonymousHashAndCreatedAtBetween(String anonymousHash, Instant start, Instant end);
-    boolean existsByAnonymousHashAndLecturer_IdAndSemesterAndAcademicYear(String anonymousHash, UUID lecturerId, String semester, String academicYear);
-    List<Review> findByLecturer_IdOrderByCreatedAtDesc(UUID lecturerId);
+    boolean existsByAnonymousHashAndLecturer_IdAndSemesterAndAcademicYear(String anonymousHash, Long lecturerId, String semester, String academicYear);
+    List<Review> findByLecturer_IdOrderByCreatedAtDesc(Long lecturerId);
 
     @Query("select avg(r.ratingClarity) from Review r where r.lecturer.id = :lecturerId and r.approved = true")
-    Double averageClarity(UUID lecturerId);
+    Double averageClarity(Long lecturerId);
 
     @Query("select avg(r.ratingFairness) from Review r where r.lecturer.id = :lecturerId and r.approved = true")
-    Double averageFairness(UUID lecturerId);
+    Double averageFairness(Long lecturerId);
 
     @Query("select avg(r.ratingPressure) from Review r where r.lecturer.id = :lecturerId and r.approved = true")
-    Double averagePressure(UUID lecturerId);
+    Double averagePressure(Long lecturerId);
 
     @Query("select avg(r.ratingWorkload) from Review r where r.lecturer.id = :lecturerId and r.approved = true")
-    Double averageWorkload(UUID lecturerId);
+    Double averageWorkload(Long lecturerId);
 
     @Query("select avg(r.ratingSupport) from Review r where r.lecturer.id = :lecturerId and r.approved = true")
-    Double averageSupport(UUID lecturerId);
+    Double averageSupport(Long lecturerId);
 
-    long countByLecturer_IdAndApproved(UUID lecturerId, boolean approved);
+    long countByLecturer_IdAndApproved(Long lecturerId, boolean approved);
 }

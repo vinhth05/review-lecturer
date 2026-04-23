@@ -5,8 +5,6 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-import java.util.UUID;
-
 public final class AuthDtos {
     private AuthDtos() {
     }
@@ -16,7 +14,7 @@ public final class AuthDtos {
             @NotBlank String fullName,
             @Email @NotBlank String email,
             @NotBlank String password,
-            @NotNull UUID facultyId
+            @NotNull Long facultyId
     ) {
     }
 

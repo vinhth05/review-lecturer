@@ -6,7 +6,7 @@ import { Input } from '@/components/Input';
 import { SectionTitle } from '@/components/SectionTitle';
 
 interface Faculty {
-  id: string;
+  id: number;
   name: string;
 }
 
@@ -25,12 +25,12 @@ export function RegisterPage() {
       setFaculties(response.data);
     }).catch(() => {
       setFaculties([
-        { id: '11111111-1111-1111-1111-111111111111', name: 'Khoa Công nghệ thông tin' },
-        { id: '22222222-2222-2222-2222-222222222222', name: 'Khoa Kinh tế' },
-        { id: '33333333-3333-3333-3333-333333333333', name: 'Khoa Sư phạm' },
-        { id: '44444444-4444-4444-4444-444444444444', name: 'Khoa Công nghệ thực phẩm' },
-        { id: '55555555-5555-5555-5555-555555555555', name: 'Khoa Nông nghiệp' },
-        { id: '66666666-6666-6666-6666-666666666666', name: 'Khoa Thủy sản' }
+        { id: 1, name: 'Khoa Công nghệ thông tin' },
+        { id: 2, name: 'Khoa Kinh tế' },
+        { id: 3, name: 'Khoa Sư phạm' },
+        { id: 4, name: 'Khoa Công nghệ thực phẩm' },
+        { id: 5, name: 'Khoa Nông nghiệp' },
+        { id: 6, name: 'Khoa Thủy sản' }
       ]);
     });
   }, []);
@@ -43,7 +43,7 @@ export function RegisterPage() {
         fullName,
         email,
         password,
-        facultyId
+        facultyId: Number(facultyId)
       };
       const { data } = await api.post('/auth/register', payload);
       setMessage(data);

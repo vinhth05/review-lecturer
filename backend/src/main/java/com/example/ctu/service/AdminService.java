@@ -20,10 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@SuppressWarnings("null")
 public class AdminService {
 
     private final FacultyRepository facultyRepository;
@@ -81,7 +81,7 @@ public class AdminService {
     }
 
     @Transactional
-    public Lecturer hideLecturer(UUID lecturerId) {
+        public Lecturer hideLecturer(Long lecturerId) {
         Lecturer lecturer = lecturerRepository.findById(lecturerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Giảng viên không tồn tại"));
         lecturer.setStatus(LecturerStatus.HIDDEN);
@@ -131,7 +131,7 @@ public class AdminService {
                 .limit(10)
                 .toList();
 
-        Map<UUID, Long> reportCountByLecturer = reports.stream()
+        Map<Long, Long> reportCountByLecturer = reports.stream()
                 .collect(Collectors.groupingBy(report -> report.getReview().getLecturer().getId(), Collectors.counting()));
 
         List<AdminDtos.TopLecturerItem> topReportedLecturers = lecturers.stream()

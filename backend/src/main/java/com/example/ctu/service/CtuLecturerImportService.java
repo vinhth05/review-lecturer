@@ -21,9 +21,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
+@SuppressWarnings("null")
 public class CtuLecturerImportService {
 
     private static final String CTU_STAFF_BASE = "https://www.ctu.edu.vn/webctu_staff/staff.php";
@@ -98,7 +98,7 @@ public class CtuLecturerImportService {
         return new AdminDtos.ImportCtuLecturersResponse(maxPages, fetchedRows, imported, skipped, errors);
     }
 
-    private Faculty resolveFallbackFaculty(UUID fallbackFacultyId) {
+    private Faculty resolveFallbackFaculty(Long fallbackFacultyId) {
         if (fallbackFacultyId != null) {
             return facultyRepository.findById(fallbackFacultyId)
                     .orElseThrow(() -> new ResourceNotFoundException("Fallback faculty không tồn tại"));

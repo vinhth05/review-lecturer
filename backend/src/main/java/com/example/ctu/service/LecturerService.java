@@ -11,11 +11,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service
+@SuppressWarnings("null")
 public class LecturerService {
 
     private final LecturerRepository lecturerRepository;
@@ -41,7 +41,7 @@ public class LecturerService {
                 .collect(Collectors.toList());
     }
 
-    public LecturerDtos.LecturerDetailResponse detail(UUID id) {
+    public LecturerDtos.LecturerDetailResponse detail(Long id) {
         Lecturer lecturer = lecturerRepository.findDetailById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Giảng viên không tồn tại"));
         List<Review> reviews = reviewRepository.findByLecturer_IdAndApprovedOrderByCreatedAtDesc(id, true);

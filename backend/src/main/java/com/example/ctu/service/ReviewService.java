@@ -21,9 +21,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.UUID;
 
 @Service
+@SuppressWarnings("null")
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
@@ -86,7 +86,7 @@ public class ReviewService {
                 .approved(false)
                 .build();
         Review saved = reviewRepository.save(review);
-        messagingTemplate.convertAndSend("/topic/admin/reviews", saved.getId().toString());
+        messagingTemplate.convertAndSend("/topic/admin/reviews", saved.getId());
         return saved;
     }
 
@@ -118,7 +118,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public Review moderate(UUID reviewId, boolean approved) {
+    public Review moderate(Long reviewId, boolean approved) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review không tồn tại"));
         review.setApproved(approved);

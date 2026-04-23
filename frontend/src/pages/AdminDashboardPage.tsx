@@ -25,7 +25,7 @@ export function AdminDashboardPage() {
     });
   }, []);
 
-  async function approve(id: string) {
+  async function approve(id: number) {
     await api.patch(`/admin/reviews/${id}/approve`);
     await load();
   }

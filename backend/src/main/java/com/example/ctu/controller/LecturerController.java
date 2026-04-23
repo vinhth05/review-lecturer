@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/lecturers")
@@ -29,7 +28,7 @@ public class LecturerController {
     }
 
     @GetMapping("/{id}")
-    public LecturerDtos.LecturerDetailResponse detail(@PathVariable UUID id) {
+    public LecturerDtos.LecturerDetailResponse detail(@PathVariable Long id) {
         return lecturerService.detail(id);
     }
 }

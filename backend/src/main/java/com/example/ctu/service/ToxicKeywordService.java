@@ -12,10 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@SuppressWarnings("null")
 public class ToxicKeywordService {
 
     private final ToxicKeywordRepository toxicKeywordRepository;
@@ -68,7 +68,7 @@ public class ToxicKeywordService {
     }
 
     @Transactional
-    public void delete(UUID id) {
+    public void delete(Long id) {
         ToxicKeyword entity = toxicKeywordRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Keyword không tồn tại"));
         toxicKeywordRepository.delete(entity);

@@ -7,9 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
-public interface LecturerRepository extends JpaRepository<Lecturer, UUID> {
+public interface LecturerRepository extends JpaRepository<Lecturer, Long> {
     List<Lecturer> findByFaculty_CodeAndStatus(String facultyCode, LecturerStatus status);
     List<Lecturer> findBySubject_CodeAndStatus(String subjectCode, LecturerStatus status);
     List<Lecturer> findByStatus(LecturerStatus status);
@@ -17,5 +16,5 @@ public interface LecturerRepository extends JpaRepository<Lecturer, UUID> {
     boolean existsByFullNameIgnoreCase(String fullName);
 
     @Query("select l from Lecturer l join fetch l.faculty left join fetch l.subject where l.id = :id")
-    Optional<Lecturer> findDetailById(UUID id);
+    Optional<Lecturer> findDetailById(Long id);
 }

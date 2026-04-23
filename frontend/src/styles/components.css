@@ -87,6 +87,61 @@
   gap: 10px;
 }
 
+.rating-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.rating-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--bg-elevated) 90%, transparent);
+}
+
+.rating-label {
+  margin: 0 0 6px;
+  font-weight: 700;
+}
+
+.rating-stars {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.star-btn {
+  border: none;
+  background: transparent;
+  color: #c7cedb;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px;
+  transition: transform 120ms ease, color 120ms ease;
+}
+
+.star-btn:hover {
+  transform: translateY(-1px);
+  color: #f7b500;
+}
+
+.star-btn.active {
+  color: #f7b500;
+}
+
+.rating-value {
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.review-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
 .feature-list {
   margin: 0;
   padding-left: 18px;
@@ -114,6 +169,265 @@
   padding: 10px;
 }
 
+.lecturer-hub {
+  display: grid;
+  gap: 18px;
+}
+
+.policy-banner {
+  max-width: 780px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, white);
+  background: color-mix(in srgb, #eaf3ff 86%, white);
+  color: #2057bb;
+  font-weight: 600;
+}
+
+.policy-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  display: inline-grid;
+  place-items: center;
+  font-size: 12px;
+}
+
+.policy-banner a {
+  color: #2057bb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.search-panel {
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+  border-radius: 30px;
+  background: color-mix(in srgb, white 94%, var(--bg));
+  border: 1px solid var(--border);
+  box-shadow: 0 15px 45px rgba(20, 33, 61, 0.08);
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-icon {
+  font-size: 1.45rem;
+  line-height: 1;
+  color: #95a4bf;
+}
+
+.search-input.input {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f3559;
+}
+
+.search-input.input::placeholder {
+  color: #a4b3cb;
+}
+
+.hub-toolbar {
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, white 92%, var(--bg));
+  padding: 8px;
+  display: grid;
+  grid-template-columns: 1fr minmax(220px, 280px);
+  gap: 10px;
+  align-items: center;
+}
+
+.campus-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px;
+}
+
+.campus-tab {
+  border: none;
+  background: transparent;
+  padding: 10px 18px;
+  border-radius: 999px;
+  color: #8fa0bc;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.campus-tab.active {
+  background: linear-gradient(135deg, #fb7a2c, #f26a21);
+  color: white;
+  box-shadow: 0 6px 14px rgba(242, 106, 33, 0.35);
+}
+
+.subject-filter {
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  background: color-mix(in srgb, white 90%, var(--bg));
+  color: #8191ab;
+  font-weight: 700;
+}
+
+.lecturer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.lecturer-card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.lecturer-card-link:hover .lecturer-card {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 42px rgba(18, 31, 58, 0.12);
+}
+
+.lecturer-card {
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, white 94%, var(--bg));
+  box-shadow: 0 15px 36px rgba(18, 31, 58, 0.08);
+  padding: 20px;
+  display: grid;
+  gap: 10px;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+  cursor: pointer;
+}
+
+.campus-pill {
+  justify-self: start;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: white;
+  background: #0f1d3c;
+}
+
+.lecturer-card h3 {
+  margin: 2px 0 0;
+  font-size: 1.9rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: #152b51;
+}
+
+.major-text {
+  margin: 0;
+  font-size: 0.9rem;
+  font-style: italic;
+  font-weight: 700;
+  color: #95a5c1;
+}
+
+.course-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.course-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 10px;
+  border: 1px solid #dde6f4;
+  background: #f4f8ff;
+  color: #6b7f9f;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.card-foot {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #9caac0;
+  font-weight: 800;
+  font-size: 0.82rem;
+}
+
+.card-foot a {
+  font-size: 1.1rem;
+  color: #b3bfd2;
+}
+
+.card-arrow {
+  font-size: 1.15rem;
+  color: #b3bfd2;
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 2px 0;
+}
+
+.pagination-meta {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pagination-btn {
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, white 92%, var(--bg));
+  color: #6d7f9b;
+  border-radius: 999px;
+  min-width: 42px;
+  height: 42px;
+  padding: 0 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
+}
+
+.pagination-btn.active {
+  background: linear-gradient(135deg, #fb7a2c, #f26a21);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 8px 18px rgba(242, 106, 33, 0.26);
+}
+
+.pagination-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 @media (max-width: 900px) {
   .card-grid {
     grid-template-columns: 1fr;
@@ -121,5 +435,40 @@
 
   .grid-two {
     grid-template-columns: 1fr;
+  }
+
+  .rating-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .policy-banner {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .search-panel {
+    border-radius: 20px;
+  }
+
+  .search-input.input {
+    font-size: 1rem;
+  }
+
+  .hub-toolbar {
+    border-radius: 20px;
+    grid-template-columns: 1fr;
+  }
+
+  .lecturer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lecturer-card h3 {
+    font-size: 1.55rem;
+  }
+
+  .pagination-bar {
+    justify-content: center;
   }
 }

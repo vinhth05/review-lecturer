@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 public final class AdminDtos {
     private AdminDtos() {
@@ -13,15 +12,15 @@ public final class AdminDtos {
     public record CreateFacultyRequest(String name, String code) {
     }
 
-    public record CreateSubjectRequest(String name, String code, UUID facultyId) {
+    public record CreateSubjectRequest(String name, String code, Long facultyId) {
     }
 
-    public record CreateLecturerRequest(String lecturerCode, String fullName, UUID facultyId, UUID subjectId) {
+    public record CreateLecturerRequest(String lecturerCode, String fullName, Long facultyId, Long subjectId) {
     }
 
     public record ImportCtuLecturersRequest(
             Integer maxPages,
-            UUID fallbackFacultyId
+            Long fallbackFacultyId
     ) {
     }
 
@@ -37,12 +36,12 @@ public final class AdminDtos {
         public record CreateToxicKeywordRequest(@NotBlank String keyword) {
         }
 
-        public record ToxicKeywordItem(UUID id, String keyword, Instant createdAt) {
+        public record ToxicKeywordItem(Long id, String keyword, Instant createdAt) {
         }
 
     public record PendingReviewItem(
-            UUID id,
-            UUID lecturerId,
+                        Long id,
+                        Long lecturerId,
             String lecturerName,
             String facultyName,
             String comment,
@@ -59,7 +58,7 @@ public final class AdminDtos {
     }
 
     public record FacultyStatisticItem(
-            UUID facultyId,
+            Long facultyId,
             String facultyName,
             long lecturerCount,
             long reviewCount,
@@ -69,7 +68,7 @@ public final class AdminDtos {
     }
 
     public record TopLecturerItem(
-            UUID lecturerId,
+            Long lecturerId,
             String lecturerName,
             String facultyName,
             double averageRating,

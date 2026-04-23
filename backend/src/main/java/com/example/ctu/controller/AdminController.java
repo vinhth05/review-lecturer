@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/admin")
@@ -50,12 +49,12 @@ public class AdminController {
     }
 
     @PatchMapping("/reviews/{id}/approve")
-    public ResponseEntity<Review> approveReview(@PathVariable UUID id) {
+    public ResponseEntity<Review> approveReview(@PathVariable Long id) {
         return ResponseEntity.ok(reviewService.moderate(id, true));
     }
 
     @PatchMapping("/lecturers/{id}/hide")
-    public ResponseEntity<Lecturer> hideLecturer(@PathVariable UUID id) {
+    public ResponseEntity<Lecturer> hideLecturer(@PathVariable Long id) {
         return ResponseEntity.ok(adminService.hideLecturer(id));
     }
 
@@ -98,7 +97,7 @@ public class AdminController {
     }
 
     @DeleteMapping("/toxic-keywords/{id}")
-    public ResponseEntity<Void> deleteToxicKeyword(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteToxicKeyword(@PathVariable Long id) {
         toxicKeywordService.delete(id);
         return ResponseEntity.noContent().build();
     }

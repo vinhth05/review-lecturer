@@ -4,14 +4,13 @@ import com.example.ctu.entity.enums.LecturerStatus;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 public final class LecturerDtos {
     private LecturerDtos() {
     }
 
     public record LecturerSummaryResponse(
-            UUID id,
+            Long id,
             String lecturerCode,
             String fullName,
             String facultyName,
@@ -32,7 +31,7 @@ public final class LecturerDtos {
     }
 
     public record LecturerDetailResponse(
-            UUID id,
+            Long id,
             String lecturerCode,
             String fullName,
             String facultyName,
@@ -51,7 +50,7 @@ public final class LecturerDtos {
     }
 
     public record ReviewItem(
-            UUID id,
+            Long id,
             int ratingClarity,
             int ratingFairness,
             int ratingPressure,

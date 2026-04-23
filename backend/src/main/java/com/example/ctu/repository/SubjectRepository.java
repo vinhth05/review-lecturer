@@ -1,11 +1,13 @@
 package com.example.ctu.repository;
 
-import com.example.ctu.entity.Subject;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
-import java.util.UUID;
+import com.example.ctu.entity.Subject;
 
-public interface SubjectRepository extends JpaRepository<Subject, UUID> {
-    List<Subject> findByFaculty_Code(String facultyCode);
+public interface SubjectRepository extends JpaRepository<Subject, Long> {
+    List<Subject> findAllByOrderByFaculty_NameAscNameAsc();
+
+    List<Subject> findByFaculty_CodeOrderByNameAsc(String facultyCode);
 }

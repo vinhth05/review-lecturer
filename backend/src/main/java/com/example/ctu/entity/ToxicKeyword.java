@@ -1,7 +1,6 @@
 package com.example.ctu.entity;
 
 import java.time.Instant;
-import java.util.UUID;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -19,8 +18,8 @@ import jakarta.persistence.Table;
 public class ToxicKeyword {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false, unique = true, length = 100)
     private String keyword;
@@ -32,17 +31,17 @@ public class ToxicKeyword {
     public ToxicKeyword() {
     }
 
-    public ToxicKeyword(UUID id, String keyword, Instant createdAt) {
+    public ToxicKeyword(Long id, String keyword, Instant createdAt) {
         this.id = id;
         this.keyword = keyword;
         this.createdAt = createdAt;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

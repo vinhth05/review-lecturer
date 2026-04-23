@@ -87,6 +87,24 @@ docker compose up --build
 
 ## 6. Chạy local thủ công
 
+### Chạy cả backend + frontend bằng 1 lệnh (Windows PowerShell)
+
+```powershell
+cd d:\He\Project
+.\run-all.ps1
+```
+
+Nếu PowerShell báo lỗi ExecutionPolicy, dùng file BAT (không cần đổi policy):
+
+```bat
+cd /d d:\He\Project
+run-all.bat
+```
+
+Lệnh trên sẽ mở 2 cửa sổ terminal riêng:
+- 1 cửa sổ chạy backend (`mvn spring-boot:run`)
+- 1 cửa sổ chạy frontend (`npm run dev`)
+
 ### Backend
 
 ```bash

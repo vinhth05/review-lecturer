@@ -1,30 +1,24 @@
--- SQL Server compatible import (chunks <= 1000 rows)
+-- Backfill subject_id for existing lecturers using imported V4 source data
 DECLARE @FallbackFacultyId BIGINT;
 SELECT TOP 1 @FallbackFacultyId = id FROM faculties ORDER BY created_at;
 
 IF @FallbackFacultyId IS NULL
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM faculties WHERE code = 'CTU_AUTO')
-	BEGIN
-		INSERT INTO faculties (name, code, created_at)
-		VALUES (N'Truong Dai hoc Can Tho (Auto)', 'CTU_AUTO', SYSUTCDATETIME());
-	END;
+    IF NOT EXISTS (SELECT 1 FROM faculties WHERE code = 'CTU_AUTO')
+    BEGIN
+        INSERT INTO faculties (name, code, created_at)
+        VALUES (N'Truong Dai hoc Can Tho (Auto)', 'CTU_AUTO', SYSUTCDATETIME());
+    END;
 
-	SELECT TOP 1 @FallbackFacultyId = id
-	FROM faculties
-	WHERE code = 'CTU_AUTO'
-	ORDER BY created_at;
-
-	IF @FallbackFacultyId IS NULL
-		SELECT TOP 1 @FallbackFacultyId = id FROM faculties ORDER BY created_at;
-
-	IF @FallbackFacultyId IS NULL
-		THROW 50000, 'No faculty found to map imported lecturers.', 1;
+    SELECT TOP 1 @FallbackFacultyId = id
+    FROM faculties
+    WHERE code = 'CTU_AUTO'
+    ORDER BY created_at;
 END;
 
 DECLARE @FacultyIdMap TABLE (
-	source_id UNIQUEIDENTIFIER NOT NULL,
-	faculty_id BIGINT NOT NULL
+    source_id UNIQUEIDENTIFIER NOT NULL,
+    faculty_id BIGINT NOT NULL
 );
 
 INSERT INTO @FacultyIdMap (source_id, faculty_id)
@@ -47,7 +41,7 @@ DECLARE @LecturerSource TABLE (
 	bio NVARCHAR(MAX) NULL,
 	department NVARCHAR(255) NULL,
 	faculty_id UNIQUEIDENTIFIER NULL,
-	subject_id BIGINT NULL,
+    subject_id BIGINT NULL,
 	status NVARCHAR(30) NULL,
 	average_rating DECIMAL(3,2) NULL,
 	total_reviews INT NULL
@@ -1142,80 +1136,85 @@ INSERT INTO @LecturerSource (id, lecturer_code, full_name, bio, department, facu
 ('eb52bfaa-d72e-45e7-a277-c7bb7265fb09', 'CTU01082', N'Nguyễn Cộng Hòa', N'Nguồn CTU 2021 | Gioi tinh: Không rõ | Hạng: GV | Học hàm: ĐH | Chuyên môn: Quân sự', N'Danh sách CTU công khai', '550e8400-e29b-41d4-a716-446655440001', NULL, 'ACTIVE', NULL, 0),
 ('bd7a5624-84c1-44b7-8f07-c3b8f173ed51', 'CTU01083', N'Vũ Đình Phương', N'Nguồn CTU 2021 | Gioi tinh: Không rõ | Hạng: GV | Học hàm: ĐH | Chuyên môn: Quân sự', N'Danh sách CTU công khai', '550e8400-e29b-41d4-a716-446655440001', NULL, 'ACTIVE', NULL, 0),
 ('717597ae-a360-4778-8b25-b93133c3cf49', 'CTU01084', N'Nguyễn Vĩnh Ninh', N'Nguồn CTU 2021 | Gioi tinh: Không rõ | Hạng: GV | Học hàm: ĐH | Chuyên môn: Chính trị học', N'Danh sách CTU công khai', '550e8400-e29b-41d4-a716-446655440001', NULL, 'ACTIVE', NULL, 0);
-
 DECLARE @LecturerSpecializations TABLE (
-	lecturer_id UNIQUEIDENTIFIER NOT NULL,
-	faculty_id BIGINT NOT NULL,
-	specialization NVARCHAR(255) NULL
+    lecturer_code NVARCHAR(50) NOT NULL,
+    full_name NVARCHAR(255) NOT NULL,
+    faculty_id BIGINT NOT NULL,
+    specialization NVARCHAR(255) NULL
 );
 
-INSERT INTO @LecturerSpecializations (lecturer_id, faculty_id, specialization)
+INSERT INTO @LecturerSpecializations (lecturer_code, full_name, faculty_id, specialization)
 SELECT
-	s.id,
-		COALESCE(f.faculty_id, @FallbackFacultyId),
-	NULLIF(LTRIM(RTRIM(
-		CASE
-			WHEN s.bio IS NULL THEN NULL
-			WHEN CHARINDEX(N'Chuyên môn:', s.bio) > 0 THEN
-				CASE
-					WHEN CHARINDEX(N'|', s.bio, CHARINDEX(N'Chuyên môn:', s.bio)) > 0 THEN
-						SUBSTRING(
-							s.bio,
-							CHARINDEX(N'Chuyên môn:', s.bio) + LEN(N'Chuyên môn:'),
-							CHARINDEX(N'|', s.bio, CHARINDEX(N'Chuyên môn:', s.bio)) - (CHARINDEX(N'Chuyên môn:', s.bio) + LEN(N'Chuyên môn:'))
-						)
-					ELSE SUBSTRING(s.bio, CHARINDEX(N'Chuyên môn:', s.bio) + LEN(N'Chuyên môn:'), 255)
-				END
-			ELSE NULL
-		END
-	)), N'')
+    s.lecturer_code,
+    s.full_name,
+        COALESCE(f.faculty_id, @FallbackFacultyId),
+    NULLIF(LTRIM(RTRIM(
+        CASE
+            WHEN s.bio IS NULL THEN NULL
+            WHEN CHARINDEX(N'Chuyên môn:', s.bio) > 0 THEN
+                CASE
+                    WHEN CHARINDEX(N'|', s.bio, CHARINDEX(N'Chuyên môn:', s.bio)) > 0 THEN
+                        SUBSTRING(
+                            s.bio,
+                            CHARINDEX(N'Chuyên môn:', s.bio) + LEN(N'Chuyên môn:'),
+                            CHARINDEX(N'|', s.bio, CHARINDEX(N'Chuyên môn:', s.bio)) - (CHARINDEX(N'Chuyên môn:', s.bio) + LEN(N'Chuyên môn:'))
+                        )
+                    ELSE SUBSTRING(s.bio, CHARINDEX(N'Chuyên môn:', s.bio) + LEN(N'Chuyên môn:'), 255)
+                END
+            ELSE NULL
+        END
+    )), N'')
 FROM @LecturerSource s
-	LEFT JOIN @FacultyIdMap f ON f.source_id = s.faculty_id;
+    LEFT JOIN @FacultyIdMap f ON f.source_id = s.faculty_id;
 
 INSERT INTO subjects (name, code, faculty_id, created_at)
 SELECT
-	p.specialization,
-	CONCAT('CTUSUB_', RIGHT(REPLACE(CONVERT(VARCHAR(36), NEWID()), '-', ''), 12)),
-	p.faculty_id,
-	SYSUTCDATETIME()
+    p.specialization,
+    CONCAT('CTUSUB_', RIGHT(REPLACE(CONVERT(VARCHAR(36), NEWID()), '-', ''), 12)),
+    p.faculty_id,
+    SYSUTCDATETIME()
 FROM (
-	SELECT DISTINCT faculty_id, specialization
-	FROM @LecturerSpecializations
-	WHERE specialization IS NOT NULL
+    SELECT DISTINCT faculty_id, specialization
+    FROM @LecturerSpecializations
+    WHERE specialization IS NOT NULL
 ) p
 WHERE NOT EXISTS (
-	SELECT 1
-	FROM subjects s2
-	WHERE s2.faculty_id = p.faculty_id
-	  AND s2.name = p.specialization
+    SELECT 1
+    FROM subjects s2
+    WHERE s2.faculty_id = p.faculty_id
+      AND s2.name = p.specialization
 );
 
-INSERT INTO lecturers (lecturer_code, full_name, faculty_id, subject_id, status, created_at)
-SELECT
-	s.lecturer_code,
-	s.full_name,
-	ls.faculty_id,
-	COALESCE(s.subject_id, matchedSubject.id),
-	CASE
-		WHEN s.status IS NULL OR LTRIM(RTRIM(s.status)) = '' THEN 'ACTIVE'
-		ELSE s.status
-	END,
-	SYSUTCDATETIME()
-FROM @LecturerSource s
-INNER JOIN @LecturerSpecializations ls ON ls.lecturer_id = s.id
+UPDATE l
+SET l.subject_id = matchedSubject.id
+FROM lecturers l
+INNER JOIN @LecturerSpecializations ls ON ls.lecturer_code = l.lecturer_code
 OUTER APPLY (
-	SELECT TOP 1 s2.id
-	FROM subjects s2
-	WHERE s2.faculty_id = ls.faculty_id
-	  AND s2.name = ls.specialization
-	ORDER BY s2.created_at
+    SELECT TOP 1 s2.id
+    FROM subjects s2
+    WHERE s2.faculty_id = ls.faculty_id
+      AND s2.name = ls.specialization
+    ORDER BY s2.created_at
 ) matchedSubject
-WHERE NOT EXISTS (
-	SELECT 1
-	FROM lecturers l
-	WHERE l.lecturer_code = s.lecturer_code
-);
+WHERE (l.subject_id IS NULL)
+  AND matchedSubject.id IS NOT NULL;
 
-DECLARE @ImportedCount INT = @@ROWCOUNT;
-PRINT CONCAT('Imported lecturers from V4 source: ', @ImportedCount);
+DECLARE @UpdatedByCodeRows INT = @@ROWCOUNT;
 
+UPDATE l
+SET l.subject_id = matchedSubject.id
+FROM lecturers l
+INNER JOIN @LecturerSpecializations ls ON ls.full_name = l.full_name
+OUTER APPLY (
+        SELECT TOP 1 s2.id
+        FROM subjects s2
+        WHERE s2.faculty_id = ls.faculty_id
+            AND s2.name = ls.specialization
+        ORDER BY s2.created_at
+) matchedSubject
+WHERE l.subject_id IS NULL
+    AND matchedSubject.id IS NOT NULL;
+
+DECLARE @UpdatedByNameRows INT = @@ROWCOUNT;
+PRINT CONCAT('Backfilled lecturer subjects from V4 source (code): ', @UpdatedByCodeRows);
+PRINT CONCAT('Backfilled lecturer subjects from V4 source (name): ', @UpdatedByNameRows);
