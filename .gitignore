@@ -8,6 +8,9 @@ Thumbs.db
 # Backend
 backend/target/
 backend/.mvn/
+backend/src/main/resources/db
+database/
+
 
 # Frontend
 frontend/node_modules/
@@ -20,3 +23,6 @@ frontend/dist/
 # IDE
 .vscode/
 .idea/
+
+run-all.bat
+run-all.ps1

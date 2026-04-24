@@ -88,7 +88,7 @@ export function LecturerListPage() {
         <span className="search-icon">⌕</span>
         <Input
           className="search-input"
-          placeholder="Tìm theo tên hoặc mã giảng viên (VD: TUANVM2)..."
+          placeholder="Tìm theo tên giảng viên..."
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />

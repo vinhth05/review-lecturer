@@ -472,3 +472,611 @@
     justify-content: center;
   }
 }
+
+.lecturer-detail-page {
+  gap: 22px;
+}
+
+.lecturer-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.lecturer-hero-copy,
+.hero-summary-card,
+.detail-section-card {
+  border-radius: 28px;
+}
+
+.lecturer-hero-copy {
+  position: relative;
+  overflow: hidden;
+  padding: 26px 28px;
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
+  background:
+    radial-gradient(circle at top right, rgba(39, 176, 255, 0.18), transparent 28%),
+    linear-gradient(135deg, color-mix(in srgb, white 94%, var(--bg)) 0%, color-mix(in srgb, #edf5ff 85%, white) 100%);
+  box-shadow: var(--shadow);
+}
+
+.lecturer-hero-copy::after {
+  content: '';
+  position: absolute;
+  inset: auto -24px -24px auto;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(242, 106, 33, 0.2), transparent 70%);
+  pointer-events: none;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #4d6fb0;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.hero-kicker,
+.summary-title,
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.hero-kicker {
+  color: var(--primary);
+  margin-bottom: 10px;
+}
+
+.lecturer-hero-copy h1 {
+  margin: 0;
+  font-size: clamp(2.4rem, 4vw, 4.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+
+.hero-subtitle {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.hero-tags,
+.hero-actions,
+.review-tag-row,
+.review-actions,
+.sidebar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hero-tags {
+  margin-top: 18px;
+}
+
+.hero-tag,
+.detail-chip,
+.review-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, white 92%, var(--bg));
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.hero-tag-strong,
+.detail-chip-primary {
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+  border-color: color-mix(in srgb, var(--primary) 24%, var(--border));
+}
+
+.hero-actions {
+  margin-top: 24px;
+}
+
+.hero-summary-card {
+  padding: 24px;
+  display: grid;
+  gap: 18px;
+  background: linear-gradient(180deg, color-mix(in srgb, white 96%, var(--bg)) 0%, color-mix(in srgb, #eff6ff 92%, white) 100%);
+}
+
+.summary-score {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.score-ring {
+  width: 106px;
+  height: 106px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  background: conic-gradient(var(--primary) 0deg, var(--accent) 180deg, rgba(39, 176, 255, 0.14) 180deg, rgba(39, 176, 255, 0.14) 360deg);
+  padding: 10px;
+  box-shadow: inset 0 0 0 12px color-mix(in srgb, white 84%, var(--bg));
+}
+
+.score-ring span {
+  display: block;
+  font-size: 2rem;
+  line-height: 1;
+  font-weight: 800;
+  color: var(--primary-strong);
+}
+
+.score-ring small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.summary-title {
+  margin: 0 0 8px;
+  color: var(--primary);
+}
+
+.summary-copy {
+  margin: 0;
+  color: var(--muted);
+}
+
+.hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.hero-metrics div,
+.summary-stack div,
+.semester-item,
+.distribution-legend div,
+.highlight-pill,
+.review-card,
+.detail-section-card,
+.detail-empty-state {
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, white 94%, var(--bg));
+}
+
+.hero-metrics div {
+  padding: 14px;
+  display: grid;
+  gap: 6px;
+}
+
+.hero-metrics strong,
+.summary-stack strong,
+.semester-item strong,
+.distribution-legend strong {
+  font-size: 1.15rem;
+  color: var(--text);
+}
+
+.hero-metrics span,
+.summary-stack span,
+.semester-item span,
+.distribution-legend span,
+.detail-section-meta,
+.detail-supporting-text,
+.form-message,
+.review-fit,
+.review-meta-badge small,
+.review-score-row,
+.review-comment {
+  color: var(--muted);
+}
+
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.detail-main-column,
+.detail-side-column {
+  display: grid;
+  gap: 18px;
+}
+
+.detail-section-card {
+  padding: 22px;
+}
+
+.sticky-card {
+  position: sticky;
+  top: 92px;
+}
+
+.detail-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.detail-section-heading.compact {
+  margin-bottom: 14px;
+}
+
+.detail-section-heading h3 {
+  margin: 6px 0 0;
+  font-size: 1.2rem;
+}
+
+.chip-row,
+.highlight-list,
+.distribution-legend,
+.semester-list,
+.review-list {
+  display: grid;
+  gap: 12px;
+}
+
+.chip-row {
+  grid-template-columns: repeat(auto-fit, minmax(150px, max-content));
+}
+
+.detail-supporting-text {
+  margin: 14px 0 0;
+  line-height: 1.7;
+}
+
+.detail-grid-split {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.chart-box {
+  width: 100%;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, color-mix(in srgb, white 96%, var(--bg)) 0%, color-mix(in srgb, #edf5ff 88%, white) 100%);
+  padding: 10px;
+}
+
+.chart-box-bars {
+  height: 260px;
+}
+
+.chart-box-radar {
+  height: 250px;
+}
+
+.distribution-legend {
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  margin-top: 14px;
+}
+
+.distribution-legend div,
+.highlight-pill,
+.semester-item {
+  padding: 12px 14px;
+}
+
+.distribution-legend div,
+.semester-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.highlight-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.tone-strong {
+  background: color-mix(in srgb, #eaf5ff 74%, white);
+}
+
+.tone-good {
+  background: color-mix(in srgb, #eef8f1 74%, white);
+}
+
+.tone-soft {
+  background: color-mix(in srgb, #f5f6ff 74%, white);
+}
+
+.tone-warn {
+  background: color-mix(in srgb, #fff3e8 74%, white);
+}
+
+.review-card {
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+  box-shadow: 0 12px 32px rgba(18, 31, 58, 0.05);
+}
+
+.review-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.review-card-head h4 {
+  margin: 6px 0 0;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+}
+
+.review-fit {
+  margin: 0;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+}
+
+.review-meta-badge {
+  min-width: 108px;
+  border-radius: 16px;
+  padding: 10px 12px;
+  background: var(--primary-soft);
+  text-align: center;
+  display: grid;
+  gap: 3px;
+}
+
+.review-meta-badge span {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--primary-strong);
+}
+
+.review-comment {
+  margin: 0;
+  line-height: 1.75;
+  white-space: pre-line;
+}
+
+.review-score-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.review-actions {
+  justify-content: flex-start;
+  padding-top: 4px;
+}
+
+.review-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.summary-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.summary-stack div {
+  padding: 14px 16px;
+  display: grid;
+  gap: 4px;
+}
+
+.semester-list {
+  margin-top: 16px;
+}
+
+.sidebar-actions {
+  margin-top: 16px;
+}
+
+.field-label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.rating-grid-compact {
+  grid-template-columns: 1fr;
+}
+
+.detail-form {
+  gap: 14px;
+}
+
+.detail-empty-state {
+  padding: 34px;
+  max-width: 620px;
+  margin: 0 auto;
+  display: grid;
+  gap: 10px;
+  text-align: center;
+}
+
+.detail-empty-action {
+  justify-self: center;
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .lecturer-hero-copy {
+  border-color: rgba(123, 184, 255, 0.18);
+  background:
+    radial-gradient(circle at top right, rgba(123, 184, 255, 0.16), transparent 26%),
+    linear-gradient(135deg, rgba(13, 21, 37, 0.98) 0%, rgba(8, 14, 26, 0.98) 100%);
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .lecturer-hero-copy::after {
+  background: radial-gradient(circle, rgba(123, 184, 255, 0.14), transparent 70%);
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .hero-summary-card,
+:root[data-theme='dark'] .lecturer-detail-page .detail-section-card,
+:root[data-theme='dark'] .lecturer-detail-page .detail-empty-state {
+  background: linear-gradient(180deg, rgba(10, 18, 34, 0.96) 0%, rgba(7, 12, 24, 0.96) 100%);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .hero-tag,
+:root[data-theme='dark'] .lecturer-detail-page .detail-chip,
+:root[data-theme='dark'] .lecturer-detail-page .review-tag,
+:root[data-theme='dark'] .lecturer-detail-page .hero-metrics div,
+:root[data-theme='dark'] .lecturer-detail-page .summary-stack div,
+:root[data-theme='dark'] .lecturer-detail-page .semester-item,
+:root[data-theme='dark'] .lecturer-detail-page .distribution-legend div,
+:root[data-theme='dark'] .lecturer-detail-page .highlight-pill,
+:root[data-theme='dark'] .lecturer-detail-page .review-card,
+:root[data-theme='dark'] .lecturer-detail-page .review-meta-badge,
+:root[data-theme='dark'] .lecturer-detail-page .chart-box {
+  background: rgba(12, 20, 36, 0.92);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .hero-tag-strong,
+:root[data-theme='dark'] .lecturer-detail-page .detail-chip-primary {
+  background: rgba(123, 184, 255, 0.16);
+  border-color: rgba(123, 184, 255, 0.2);
+  color: var(--primary-strong);
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .tone-strong {
+  background: rgba(123, 184, 255, 0.1);
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .tone-good {
+  background: rgba(46, 170, 103, 0.1);
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .tone-soft {
+  background: rgba(126, 140, 255, 0.1);
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .tone-warn {
+  background: rgba(255, 159, 67, 0.12);
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .score-ring {
+  box-shadow: inset 0 0 0 12px rgba(11, 18, 31, 0.92);
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .score-ring span,
+:root[data-theme='dark'] .lecturer-detail-page .review-meta-badge span,
+:root[data-theme='dark'] .lecturer-detail-page .hero-metrics strong,
+:root[data-theme='dark'] .lecturer-detail-page .summary-stack strong,
+:root[data-theme='dark'] .lecturer-detail-page .semester-item strong,
+:root[data-theme='dark'] .lecturer-detail-page .distribution-legend strong {
+  color: var(--text);
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .back-link,
+:root[data-theme='dark'] .lecturer-detail-page .review-link,
+:root[data-theme='dark'] .lecturer-detail-page .text-link {
+  color: var(--accent);
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .chart-box {
+  background: linear-gradient(180deg, rgba(11, 18, 32, 0.98) 0%, rgba(8, 13, 24, 0.98) 100%);
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .review-comment,
+:root[data-theme='dark'] .lecturer-detail-page .review-fit,
+:root[data-theme='dark'] .lecturer-detail-page .detail-section-meta,
+:root[data-theme='dark'] .lecturer-detail-page .detail-supporting-text,
+:root[data-theme='dark'] .lecturer-detail-page .form-message,
+:root[data-theme='dark'] .lecturer-detail-page .review-meta-badge small,
+:root[data-theme='dark'] .lecturer-detail-page .review-score-row,
+:root[data-theme='dark'] .lecturer-detail-page .hero-metrics span,
+:root[data-theme='dark'] .lecturer-detail-page .summary-stack span,
+:root[data-theme='dark'] .lecturer-detail-page .semester-item span,
+:root[data-theme='dark'] .lecturer-detail-page .distribution-legend span {
+  color: var(--muted);
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .input {
+  background: rgba(7, 12, 24, 0.9);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .input::placeholder {
+  color: #6f8098;
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .review-card {
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.24);
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .review-meta-badge {
+  background: rgba(123, 184, 255, 0.12);
+}
+
+:root[data-theme='dark'] .lecturer-detail-page .review-link:hover,
+:root[data-theme='dark'] .lecturer-detail-page .text-link:hover {
+  color: var(--primary-strong);
+}
+
+@media (max-width: 1100px) {
+  .lecturer-hero,
+  .detail-layout,
+  .detail-grid-split {
+    grid-template-columns: 1fr;
+  }
+
+  .sticky-card {
+    position: static;
+  }
+}
+
+@media (max-width: 700px) {
+  .lecturer-hero-copy,
+  .hero-summary-card,
+  .detail-section-card,
+  .detail-empty-state {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .hero-metrics,
+  .rating-grid-compact {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-score,
+  .review-card-head,
+  .detail-section-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .score-ring {
+    width: 92px;
+    height: 92px;
+  }
+
+  .chart-box-bars,
+  .chart-box-radar {
+    height: 220px;
+  }
+}
