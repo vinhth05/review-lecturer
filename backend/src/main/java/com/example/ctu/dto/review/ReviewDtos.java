@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 public final class ReviewDtos {
     private ReviewDtos() {
@@ -16,7 +17,7 @@ public final class ReviewDtos {
             @Min(1) @Max(5) int ratingPressure,
             @Min(1) @Max(5) int ratingWorkload,
             @Min(1) @Max(5) int ratingSupport,
-            @NotBlank String comment,
+            @NotBlank @Size(min = 10, max = 1000) String comment,
             @NotBlank String semester,
             @NotBlank String academicYear
     ) {

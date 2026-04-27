@@ -1,5 +1,14 @@
 package com.example.ctu.service;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.List;
+
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.ctu.dto.admin.AdminDtos;
 import com.example.ctu.dto.review.ReviewDtos;
 import com.example.ctu.entity.Lecturer;
@@ -13,14 +22,6 @@ import com.example.ctu.exception.ResourceNotFoundException;
 import com.example.ctu.repository.LecturerRepository;
 import com.example.ctu.repository.ReportRepository;
 import com.example.ctu.repository.ReviewRepository;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneOffset;
-import java.util.List;
 
 @Service
 @SuppressWarnings("null")
@@ -83,7 +84,7 @@ public class ReviewService {
                 .comment(request.comment())
                 .semester(request.semester())
                 .academicYear(request.academicYear())
-                .approved(false)
+            .approved(true)
                 .build();
         Review saved = reviewRepository.save(review);
         messagingTemplate.convertAndSend("/topic/admin/reviews", saved.getId());

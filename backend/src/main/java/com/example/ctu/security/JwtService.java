@@ -1,17 +1,23 @@
 package com.example.ctu.security;
 
-import com.example.ctu.config.AppProperties;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.stereotype.Service;
-
-import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
+
+import javax.crypto.SecretKey;
+
+import org.springframework.stereotype.Service;
+
+import com.example.ctu.config.AppProperties;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 
 @Service
 public class JwtService {
@@ -42,14 +48,22 @@ public class JwtService {
     }
 
     private SecretKey getKey() {
-        byte[] keyBytes = properties.jwt().secret().getBytes();
-        if (properties.jwt().secret().length() > 32) {
-            try {
-                keyBytes = Decoders.BASE64.decode(properties.jwt().secret());
-            } catch (IllegalArgumentException ignored) {
-                keyBytes = properties.jwt().secret().getBytes();
+        String secret = properties.jwt().secret();
+        byte[] keyBytes;
+
+        if (secret.startsWith("base64:")) {
+            keyBytes = Base64.getDecoder().decode(secret.substring("base64:".length()));
+        } else {
+            keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+            if (keyBytes.length < 32) {
+                try {
+                    keyBytes = MessageDigest.getInstance("SHA-256").digest(keyBytes);
+                } catch (NoSuchAlgorithmException exception) {
+                    throw new IllegalStateException("Unable to derive JWT signing key", exception);
+                }
             }
         }
+
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

@@ -1,17 +1,22 @@
 package com.example.ctu.security;
 
-import com.example.ctu.entity.User;
-import com.example.ctu.repository.UserRepository;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import com.example.ctu.entity.User;
+import com.example.ctu.repository.UserRepository;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CustomUserDetailsService.class);
 
     private final UserRepository userRepository;
 
@@ -21,8 +26,13 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        LOGGER.debug("Loading user details for email: {}", username);
         User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> {
+                    LOGGER.warn("User not found for email: {}", username);
+                    return new UsernameNotFoundException("User not found");
+                });
+        LOGGER.debug("User found: email={}, role={}, verified={}", user.getEmail(), user.getRole(), user.isVerified());
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPasswordHash(),

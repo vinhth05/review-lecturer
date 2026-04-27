@@ -17,6 +17,7 @@ import { api } from '@/services/api';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { formatScore } from '@/utils/format';
+import { useAuthStore } from '@/store/authStore';
 
 const REVIEW_CRITERIA: Array<{ key: keyof Pick<FormState, 'ratingClarity' | 'ratingFairness' | 'ratingPressure' | 'ratingWorkload' | 'ratingSupport'>; label: string }> = [
   { key: 'ratingClarity', label: 'Dễ hiểu' },
@@ -175,11 +176,15 @@ function getReviewHighlights(review: LecturerDetailResponse['latestReviews'][num
 
 export function LecturerDetailPage() {
   const { id } = useParams();
+  const authUser = useAuthStore((state) => state.user);
   const [data, setData] = useState<LecturerDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const academicYearOptions = useMemo(() => buildAcademicYearOptions(), []);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitSuccess, setSubmitSuccess] = useState(false);
   const [form, setForm] = useState<FormState>({
     ratingClarity: 5,
     ratingFairness: 5,
@@ -219,6 +224,20 @@ export function LecturerDetailPage() {
       isMounted = false;
     };
   }, [id]);
+
+  const isFormValid = useMemo(() => {
+    const minCommentLength = 10;
+    const hasComment = form.comment.trim().length >= minCommentLength;
+    const hasRatings = form.ratingClarity > 0 && form.ratingFairness > 0 && form.ratingPressure > 0 && form.ratingWorkload > 0 && form.ratingSupport > 0;
+    const hasSemester = form.semester.length > 0;
+    const hasAcademicYear = form.academicYear.length > 0;
+    return hasComment && hasRatings && hasSemester && hasAcademicYear;
+  }, [form]);
+
+  const commentLength = form.comment.trim().length;
+  const minCommentLength = 10;
+  const maxCommentLength = 1000;
+  const isCommentValid = commentLength >= minCommentLength && commentLength <= maxCommentLength;
 
   const radar = useMemo(() => {
     if (!data) return [];
@@ -292,11 +311,54 @@ export function LecturerDetailPage() {
   async function submitReview(event: FormEvent) {
     event.preventDefault();
     if (!id) return;
+    if (!authUser?.token) {
+      setSubmitError('Bạn cần đăng nhập để gửi review.');
+      return;
+    }
+    if (!authUser.verified) {
+      setSubmitError('Tài khoản chưa xác thực. Vui lòng xác thực trước khi gửi review.');
+      return;
+    }
+    if (!isFormValid) {
+      setSubmitError('Vui lòng điền đầy đủ thông tin và bình luận ít nhất 10 ký tự.');
+      return;
+    }
+
+    setSubmitLoading(true);
+    setSubmitError('');
+    setSubmitSuccess(false);
+
     try {
       await api.post('/reviews', { ...form, lecturerId: Number(id) });
-      setMessage('Đã gửi review. Chờ admin duyệt.');
+      const refreshed = await api.get(`/lecturers/${id}`);
+      setData(refreshed.data);
+      setSubmitSuccess(true);
+      setSubmitError('');
+      setMessage('Review đã được đăng và hiển thị ngay.');
+      // Reset form after success
+      setTimeout(() => {
+        setForm({
+          ratingClarity: 5,
+          ratingFairness: 5,
+          ratingPressure: 3,
+          ratingWorkload: 3,
+          ratingSupport: 5,
+          comment: '',
+          semester: getCurrentSemester(),
+          academicYear: getCurrentAcademicYear()
+        });
+        setSubmitSuccess(false);
+      }, 3000);
     } catch (submitError: any) {
-      setMessage(submitError?.response?.data?.message ?? 'Gửi review thất bại');
+      const backendMessage = submitError?.response?.data?.message;
+      if (backendMessage === 'Unauthenticated') {
+        setSubmitError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+      } else {
+        setSubmitError(backendMessage ?? 'Gửi review thất bại. Vui lòng thử lại.');
+      }
+      setSubmitSuccess(false);
+    } finally {
+      setSubmitLoading(false);
     }
   }
 
@@ -312,6 +374,7 @@ export function LecturerDetailPage() {
             onClick={() => setForm((prev) => ({ ...prev, [key]: star }))}
             aria-label={`${star} sao`}
             title={`${star} sao`}
+            disabled={submitLoading}
           >
             ★
           </button>
@@ -608,13 +671,25 @@ export function LecturerDetailPage() {
 
               <label className="field-label">
                 Bình luận
+                <div className="textarea-wrapper">
                 <textarea
                   className="input review-textarea"
                   value={form.comment}
                   onChange={(event) => setForm((prev) => ({ ...prev, comment: event.target.value }))}
                   placeholder="Chia sẻ trải nghiệm học tập của bạn..."
                   rows={5}
+                    disabled={submitLoading}
+                    maxLength={maxCommentLength}
                 />
+                  <div className="textarea-meta">
+                    <span className={`char-count ${!isCommentValid ? 'invalid' : ''}`}>
+                      {commentLength}/{maxCommentLength}
+                    </span>
+                    {commentLength < minCommentLength && commentLength > 0 && (
+                      <span className="char-hint">Tối thiểu {minCommentLength} ký tự ({minCommentLength - commentLength} ký tự còn lại)</span>
+                    )}
+                  </div>
+                </div>
               </label>
 
               <div className="grid-two">
@@ -624,6 +699,7 @@ export function LecturerDetailPage() {
                     className="input"
                     value={form.semester}
                     onChange={(event) => setForm((prev) => ({ ...prev, semester: event.target.value }))}
+                    disabled={submitLoading}
                   >
                     {CTU_SEMESTERS.map((semester) => (
                       <option key={semester.value} value={semester.value}>
@@ -638,6 +714,7 @@ export function LecturerDetailPage() {
                     className="input"
                     value={form.academicYear}
                     onChange={(event) => setForm((prev) => ({ ...prev, academicYear: event.target.value }))}
+                    disabled={submitLoading}
                   >
                     {academicYearOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -648,8 +725,32 @@ export function LecturerDetailPage() {
                 </label>
               </div>
 
-              <Button type="submit">Gửi review</Button>
-              <small className="form-message">{message}</small>
+              <div className="form-actions">
+                <Button type="submit" disabled={submitLoading || !isFormValid || !authUser?.token || !authUser.verified} className="submit-btn">
+                  {submitLoading ? (
+                    <>
+                      <span className="spinner" aria-hidden="true">⏳</span>
+                      <span>Đang gửi...</span>
+                    </>
+                  ) : (
+                    'Gửi review'
+                  )}
+                </Button>
+                {!authUser?.token && <small className="form-message error-message">Vui lòng đăng nhập để gửi review.</small>}
+                {authUser?.token && !authUser.verified && <small className="form-message error-message">Tài khoản cần xác thực trước khi gửi review.</small>}
+              </div>
+
+              {submitSuccess && (
+                <div className="form-message success-message">
+                  ✓ Đã gửi review thành công và hiển thị ngay trên trang.
+                </div>
+              )}
+
+              {submitError && (
+                <div className="form-message error-message">
+                  ✕ {submitError}
+                </div>
+              )}
             </form>
           </Card>
         </aside>
