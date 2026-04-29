@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng ký</title>
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page-shell">
+  <header class="topbar">
+    <div class="brand">
+      <strong>Đăng ký tài khoản</strong>
+      <span>Tạo tài khoản sinh viên CTU</span>
+    </div>
+    <nav class="nav">
+      <a href="/">Trang chủ</a>
+      <a href="/login">Đăng nhập</a>
+    </nav>
+  </header>
+
+  <section class="hero" style="max-width:720px; margin-inline:auto;">
+    <h1>Đăng ký</h1>
+    <p>Nhập thông tin cơ bản, backend sẽ gửi OTP như luồng hiện tại.</p>
+
+    <div class="alert error" th:if="${error}" th:text="${error}"></div>
+    <div class="alert success" th:if="${success}" th:text="${success}"></div>
+
+    <form class="form" method="post" action="/register">
+      <div class="field">
+        <label>Mã số sinh viên</label>
+        <input type="text" name="studentCode" required>
+      </div>
+      <div class="field">
+        <label>Họ và tên</label>
+        <input type="text" name="fullName" required>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" name="email" required>
+      </div>
+      <div class="field">
+        <label>Mật khẩu</label>
+        <input type="password" name="password" required>
+      </div>
+      <div class="field">
+        <label>Khoa</label>
+        <select name="facultyId" required>
+          <option value="">Chọn khoa</option>
+          <option th:each="faculty : ${faculties}" th:value="${faculty.id}" th:text="${faculty.name}"></option>
+        </select>
+      </div>
+      <button class="button" type="submit">Đăng ký</button>
+    </form>
+  </section>
+</main>
+</body>
+</html>

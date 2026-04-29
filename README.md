@@ -16,16 +16,15 @@ Nền tảng đánh giá giảng viên ẩn danh cho sinh viên CTU, có kiểm 
 
 ## 2. Tech Stack
 
-- Backend: Spring Boot 3 (Java 17), Spring Security, JPA, Flyway, Swagger, WebSocket
+- Backend: Spring Boot 3 (Java 21), Spring Security, JPA, Swagger, WebSocket, Thymeleaf
 - Database: SQL Server
-- Frontend: React + TypeScript + Vite + Zustand + Recharts
+- UI: Thymeleaf server-side rendering (không còn frontend riêng)
 - Deploy: Docker + Docker Compose
 
 ## 3. Cấu trúc dự án
 
 ```text
-backend/     # Spring Boot API
-frontend/    # React application
+backend/     # Spring Boot API + Thymeleaf UI
 database/    # SQL script tổng hợp
 docs/        # ERD và tài liệu kiến trúc
 docker-compose.yml
@@ -80,14 +79,13 @@ Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 docker compose up --build
 ```
 
-- Frontend: `http://localhost:5173`
-- Backend: `http://localhost:8080`
+- App (Thymeleaf): `http://localhost:8080`
 - Swagger: `http://localhost:8080/swagger-ui/index.html`
 - MailHog UI (OTP inbox): `http://localhost:8025`
 
 ## 6. Chạy local thủ công
 
-### Chạy cả backend + frontend bằng 1 lệnh (Windows PowerShell)
+### Chạy backend bằng 1 lệnh (Windows PowerShell)
 
 ```powershell
 cd d:\He\Project
@@ -101,9 +99,7 @@ cd /d d:\He\Project
 run-all.bat
 ```
 
-Lệnh trên sẽ mở 2 cửa sổ terminal riêng:
-- 1 cửa sổ chạy backend (`mvn spring-boot:run`)
-- 1 cửa sổ chạy frontend (`npm run dev`)
+Lệnh trên sẽ mở 1 cửa sổ terminal chạy backend (`mvn spring-boot:run`).
 
 ### Backend
 
@@ -112,13 +108,9 @@ cd backend
 mvn spring-boot:run
 ```
 
-### Frontend
+### UI (Thymeleaf)
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+Truy cập trực tiếp tại `http://localhost:8080`.
 
 ## 7. Bảo mật và ẩn danh
 
@@ -129,12 +121,11 @@ npm run dev
 
 ## 8. Seed data
 
-Đã có seed:
+Đã có seed qua bootstrap Java:
 - 6 khoa mẫu CTU
 - Môn học mẫu theo khoa
 - Giảng viên mẫu
-
-Tệp: `backend/src/main/resources/db/migration/V2__seed.sql`
+- Tài khoản test cho admin, student, super admin
 
 ## 9. Roadmap startup (toàn quốc)
 

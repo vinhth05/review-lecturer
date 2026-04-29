@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập</title>
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page-shell">
+  <header class="topbar">
+    <div class="brand">
+      <strong>Đăng nhập</strong>
+      <span>Dùng JWT cookie cho trình duyệt</span>
+    </div>
+    <nav class="nav">
+      <a href="/">Trang chủ</a>
+      <a href="/register">Đăng ký</a>
+    </nav>
+  </header>
+
+  <section class="hero" style="max-width:640px; margin-inline:auto;">
+    <h1>Đăng nhập</h1>
+    <p>Form này gọi service backend và lưu token vào cookie để dùng cho HTML pages.</p>
+
+    <div class="alert error" th:if="${error}" th:text="${error}"></div>
+    <div class="alert success" th:if="${success}" th:text="${success}"></div>
+
+    <form class="form" method="post" action="/login">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" name="email" placeholder="student01@student.ctu.edu.vn" required>
+      </div>
+      <div class="field">
+        <label>Mật khẩu</label>
+        <input type="password" name="password" required>
+      </div>
+      <button class="button" type="submit">Đăng nhập</button>
+    </form>
+  </section>
+</main>
+</body>
+</html>

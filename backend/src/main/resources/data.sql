@@ -1,1 +1,0 @@
--- Seed data is managed by Flyway migrations under db/migration.

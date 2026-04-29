@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${lecturer.fullName}">Chi tiết giảng viên</title>
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page-shell">
+  <header class="topbar">
+    <div class="brand">
+      <strong th:text="${lecturer.fullName}">Tên giảng viên</strong>
+      <span th:text="${lecturer.facultyName}">Khoa</span>
+    </div>
+    <nav class="nav">
+      <a href="/">Trang chủ</a>
+      <a href="/lecturers">Danh sách</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <span class="badge">Chi tiết review</span>
+    <h1 th:text="${lecturer.fullName}">Tên giảng viên</h1>
+    <p>
+      <span th:text="${lecturer.facultyName}">Khoa</span>
+      ·
+      <span th:text="${lecturer.subjectName != null ? lecturer.subjectName : 'Chưa có môn'}">Môn</span>
+    </p>
+  </section>
+
+  <section class="detail-grid">
+    <div class="metric">
+      <span>Độ rõ ràng</span>
+      <strong th:text="|${#numbers.formatDecimal(lecturer.averageClarity, 1, 2)}/5|">0/5</strong>
+    </div>
+    <div class="metric">
+      <span>Công bằng</span>
+      <strong th:text="|${#numbers.formatDecimal(lecturer.averageFairness, 1, 2)}/5|">0/5</strong>
+    </div>
+    <div class="metric">
+      <span>Áp lực</span>
+      <strong th:text="|${#numbers.formatDecimal(lecturer.averagePressure, 1, 2)}/5|">0/5</strong>
+    </div>
+    <div class="metric">
+      <span>Khối lượng</span>
+      <strong th:text="|${#numbers.formatDecimal(lecturer.averageWorkload, 1, 2)}/5|">0/5</strong>
+    </div>
+    <div class="metric">
+      <span>Hỗ trợ</span>
+      <strong th:text="|${#numbers.formatDecimal(lecturer.averageSupport, 1, 2)}/5|">0/5</strong>
+    </div>
+    <div class="metric">
+      <span>Tổng review</span>
+      <strong th:text="${lecturer.reviewCount}">0</strong>
+    </div>
+  </section>
+
+  <section class="split">
+    <div class="card">
+      <h2 class="section-title">Phân bố rating</h2>
+      <div class="list">
+        <div class="metric" th:each="item : ${lecturer.distribution}">
+          <span th:text="${item.score} + ' sao'">5 sao</span>
+          <strong th:text="${item.count}">0</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">Review gần nhất</h2>
+      <div class="list">
+        <article class="panel" style="padding:16px" th:each="review : ${lecturer.latestReviews}">
+          <strong th:text="${review.semester + ' · ' + review.academicYear}">HK</strong>
+          <div class="meta" th:text="${review.createdAt}">Ngày tạo</div>
+          <p th:text="${review.comment}">Nội dung review</p>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

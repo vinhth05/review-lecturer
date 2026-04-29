@@ -1,9 +1,9 @@
 package com.example.ctu.dto.admin;
 
-import jakarta.validation.constraints.NotBlank;
-
 import java.time.Instant;
 import java.util.List;
+
+import jakarta.validation.constraints.NotBlank;
 
 public final class AdminDtos {
     private AdminDtos() {
@@ -54,6 +54,36 @@ public final class AdminDtos {
             int ratingSupport,
             Instant createdAt,
             long reportCount
+    ) {
+    }
+
+    public record ReviewItem(
+            Long id,
+            Long lecturerId,
+            String lecturerName,
+            String facultyName,
+            String comment,
+            String semester,
+            String academicYear,
+            int ratingClarity,
+            int ratingFairness,
+            int ratingPressure,
+            int ratingWorkload,
+            int ratingSupport,
+            boolean approved,
+            Instant createdAt,
+            long reportCount
+    ) {
+    }
+
+    public record PageResponse<T>(
+            List<T> content,
+            int page,
+            int size,
+            long totalElements,
+            int totalPages,
+            boolean first,
+            boolean last
     ) {
     }
 

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CTU Lecturer Review Platform</title>
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page-shell">
+  <header class="topbar">
+    <div class="brand">
+      <strong>CTU Lecturer Review Platform</strong>
+      <span>Xem và đánh giá giảng viên trực tiếp trên server-side Thymeleaf</span>
+    </div>
+    <nav class="nav">
+      <a href="/lecturers">Giảng viên</a>
+      <a href="/login">Đăng nhập</a>
+      <a href="/register">Đăng ký</a>
+      <a href="/logout">Đăng xuất</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <span class="badge">Trang HTML mới</span>
+    <h1>Không cần frontend riêng vẫn xem review được.</h1>
+    <p>
+      Trang này render bằng Thymeleaf từ Spring Boot. Dữ liệu giảng viên vẫn lấy từ service hiện có,
+      còn API JSON cũ vẫn giữ để không vỡ backend.
+    </p>
+  </section>
+
+  <div class="alert success" th:if="${success}" th:text="${success}"></div>
+  <div class="alert error" th:if="${error}" th:text="${error}"></div>
+
+  <section class="split">
+    <div class="card">
+      <h2 class="section-title">Giảng viên nổi bật</h2>
+      <div class="list">
+        <article class="lecturer-item" th:each="lecturer : ${lecturers}">
+          <div>
+            <strong th:text="${lecturer.fullName}">Tên giảng viên</strong>
+            <div class="meta">
+              <span th:text="${lecturer.facultyName}">Khoa</span>
+              ·
+              <span th:text="${lecturer.subjectName != null ? lecturer.subjectName : 'Chưa có môn'}">Môn</span>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div class="rating" th:text="|${#numbers.formatDecimal(lecturer.averageRating, 1, 2)}/5|">4.20/5</div>
+            <a class="button-secondary" th:href="@{'/lecturers/' + ${lecturer.id}}">Xem chi tiết</a>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <aside class="card">
+      <h2 class="section-title">Tính năng</h2>
+      <div class="list">
+        <div class="metric">
+          <span>HTML</span>
+          <strong>Thymeleaf render</strong>
+        </div>
+        <div class="metric">
+          <span>API</span>
+          <strong>JSON vẫn giữ</strong>
+        </div>
+        <div class="metric">
+          <span>Auth</span>
+          <strong>JWT cookie cho browser</strong>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <p class="footer">Spring Boot + Thymeleaf</p>
+</main>
+</body>
+</html>

@@ -1,15 +1,7 @@
 package com.example.ctu.controller;
 
-import com.example.ctu.dto.admin.AdminDtos;
-import com.example.ctu.entity.Faculty;
-import com.example.ctu.entity.Lecturer;
-import com.example.ctu.entity.Subject;
-import com.example.ctu.entity.Review;
-import com.example.ctu.service.AdminService;
-import com.example.ctu.service.CtuLecturerImportService;
-import com.example.ctu.service.ReviewService;
-import com.example.ctu.service.ToxicKeywordService;
-import jakarta.validation.Valid;
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,9 +11,20 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.example.ctu.dto.admin.AdminDtos;
+import com.example.ctu.entity.Faculty;
+import com.example.ctu.entity.Lecturer;
+import com.example.ctu.entity.Review;
+import com.example.ctu.entity.Subject;
+import com.example.ctu.service.AdminService;
+import com.example.ctu.service.CtuLecturerImportService;
+import com.example.ctu.service.ReviewService;
+import com.example.ctu.service.ToxicKeywordService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/admin")
@@ -46,6 +49,13 @@ public class AdminController {
     @GetMapping("/reviews/pending")
     public List<AdminDtos.PendingReviewItem> pendingReviews() {
         return reviewService.pendingReviews();
+    }
+
+    @GetMapping("/reviews")
+    public AdminDtos.PageResponse<AdminDtos.ReviewItem> reviews(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return adminService.listReviews(page, size);
     }
 
     @PatchMapping("/reviews/{id}/approve")

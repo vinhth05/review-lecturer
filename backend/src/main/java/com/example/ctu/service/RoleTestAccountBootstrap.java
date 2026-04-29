@@ -1,7 +1,5 @@
 package com.example.ctu.service;
 
-import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -88,52 +86,37 @@ public class RoleTestAccountBootstrap implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
         LOGGER.info("=== Starting test account bootstrap ===");
-        LOGGER.info("Admin faculty code: {}", adminFacultyCode);
-        LOGGER.info("Student faculty code: {}", studentFacultyCode);
-        LOGGER.info("SuperAdmin faculty code: {}", superAdminFacultyCode);
-        
-        Optional<Faculty> adminFaculty = resolveFaculty(adminFacultyCode);
-        Optional<Faculty> studentFaculty = resolveFaculty(studentFacultyCode);
-        Optional<Faculty> superAdminFaculty = resolveFaculty(superAdminFacultyCode);
+        Faculty adminFaculty = resolveOrCreateFaculty(adminFacultyCode, "Trường Công nghệ Thông tin & Truyền thông");
+        Faculty studentFaculty = resolveOrCreateFaculty(studentFacultyCode, "Trường Kinh tế");
+        Faculty superAdminFaculty = resolveOrCreateFaculty(superAdminFacultyCode, "Trường Công nghệ Thông tin & Truyền thông");
 
-        LOGGER.info("Admin faculty resolved: {}", adminFaculty.map(Faculty::getCode).orElse("NONE"));
-        LOGGER.info("Student faculty resolved: {}", studentFaculty.map(Faculty::getCode).orElse("NONE"));
-        LOGGER.info("SuperAdmin faculty resolved: {}", superAdminFaculty.map(Faculty::getCode).orElse("NONE"));
-
-        if (adminFaculty.isEmpty() || studentFaculty.isEmpty() || superAdminFaculty.isEmpty()) {
-            LOGGER.warn("Skip test account bootstrap because faculties are not available.");
-            return;
-        }
+        LOGGER.info("Admin faculty resolved: {}", adminFaculty.getCode());
+        LOGGER.info("Student faculty resolved: {}", studentFaculty.getCode());
+        LOGGER.info("SuperAdmin faculty resolved: {}", superAdminFaculty.getCode());
 
         LOGGER.info("Creating ADMIN account: {}", adminEmail);
-        upsertAccount(adminStudentCode, adminFullName, adminEmail, adminPassword, Role.ADMIN, adminFaculty.get());
-        
+        upsertAccount(adminStudentCode, adminFullName, adminEmail, adminPassword, Role.ADMIN, adminFaculty);
+
         LOGGER.info("Creating STUDENT account: {}", studentEmail);
-        upsertAccount(studentStudentCode, studentFullName, studentEmail, studentPassword, Role.STUDENT, studentFaculty.get());
-        
+        upsertAccount(studentStudentCode, studentFullName, studentEmail, studentPassword, Role.STUDENT, studentFaculty);
+
         LOGGER.info("Creating SUPER_ADMIN account: {}", superAdminEmail);
-        upsertAccount(superAdminStudentCode, superAdminFullName, superAdminEmail, superAdminPassword, Role.SUPER_ADMIN, superAdminFaculty.get());
+        upsertAccount(superAdminStudentCode, superAdminFullName, superAdminEmail, superAdminPassword, Role.SUPER_ADMIN, superAdminFaculty);
         
         LOGGER.info("=== Test account bootstrap completed ===");
     }
 
-    private Optional<Faculty> resolveFaculty(String preferredCode) {
-        Optional<Faculty> byPreferredCode = facultyRepository.findByCode(preferredCode);
-        if (byPreferredCode.isPresent()) {
-            return byPreferredCode;
-        }
-
-        Optional<Faculty> ict = facultyRepository.findByCode("ICT");
-        if (ict.isPresent()) {
-            return ict;
-        }
-
-        Optional<Faculty> eco = facultyRepository.findByCode("ECO");
-        if (eco.isPresent()) {
-            return eco;
-        }
-
-        return facultyRepository.findAllByOrderByNameAsc().stream().findFirst();
+    @SuppressWarnings("null")
+    private Faculty resolveOrCreateFaculty(String code, String name) {
+        return facultyRepository.findByCode(code)
+                .orElseGet(() -> {
+                    LOGGER.info("Faculty {} not found, creating bootstrap faculty", code);
+                Faculty faculty = Faculty.builder()
+                    .code(code)
+                    .name(name)
+                    .build();
+                return facultyRepository.save(faculty);
+                });
     }
 
     private void upsertAccount(String studentCode,
@@ -143,7 +126,8 @@ public class RoleTestAccountBootstrap implements ApplicationRunner {
                                Role role,
                                Faculty faculty) {
         User user = userRepository.findByEmail(email)
-                .orElseGet(() -> User.builder().email(email).build());
+                .or(() -> userRepository.findByStudentCode(studentCode))
+                .orElseGet(() -> User.builder().email(email).studentCode(studentCode).build());
 
         LOGGER.debug("Processing account - email: {}, role: {}, faculty: {}", email, role, faculty.getCode());
 
@@ -153,10 +137,8 @@ public class RoleTestAccountBootstrap implements ApplicationRunner {
         user.setFaculty(faculty);
         user.setVerified(true);
 
-        if (user.getPasswordHash() == null || !passwordEncoder.matches(plainPassword, user.getPasswordHash())) {
-            LOGGER.debug("Encoding password for: {}", email);
-            user.setPasswordHash(passwordEncoder.encode(plainPassword));
-        }
+        LOGGER.debug("Resetting password for test account: {}", email);
+        user.setPasswordHash(passwordEncoder.encode(plainPassword));
 
         userRepository.save(user);
         LOGGER.info("Account upserted successfully - email: {}, role: {}, verified: true", email, role);

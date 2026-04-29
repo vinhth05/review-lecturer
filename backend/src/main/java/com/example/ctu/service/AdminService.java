@@ -1,5 +1,17 @@
 package com.example.ctu.service;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.ctu.dto.admin.AdminDtos;
 import com.example.ctu.entity.Faculty;
 import com.example.ctu.entity.Lecturer;
@@ -14,13 +26,6 @@ import com.example.ctu.repository.ReportRepository;
 import com.example.ctu.repository.ReviewRepository;
 import com.example.ctu.repository.SubjectRepository;
 import com.example.ctu.repository.UserRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @SuppressWarnings("null")
@@ -158,6 +163,44 @@ public class AdminService {
                 topReportedLecturers
         );
     }
+
+        @Transactional(readOnly = true)
+        public AdminDtos.PageResponse<AdminDtos.ReviewItem> listReviews(int page, int size) {
+                int safePage = Math.max(page, 0);
+                int safeSize = Math.min(Math.max(size, 1), 100);
+                Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+                Page<com.example.ctu.entity.Review> reviewPage = reviewRepository.findAll(pageable);
+
+                List<AdminDtos.ReviewItem> content = reviewPage.getContent().stream()
+                                .map(review -> new AdminDtos.ReviewItem(
+                                                review.getId(),
+                                                review.getLecturer().getId(),
+                                                review.getLecturer().getFullName(),
+                                                review.getLecturer().getFaculty().getName(),
+                                                review.getComment(),
+                                                review.getSemester(),
+                                                review.getAcademicYear(),
+                                                review.getRatingClarity(),
+                                                review.getRatingFairness(),
+                                                review.getRatingPressure(),
+                                                review.getRatingWorkload(),
+                                                review.getRatingSupport(),
+                                                review.isApproved(),
+                                                review.getCreatedAt(),
+                                                reportRepository.countByReview_Id(review.getId())
+                                ))
+                                .toList();
+
+                return new AdminDtos.PageResponse<>(
+                                content,
+                                reviewPage.getNumber(),
+                                reviewPage.getSize(),
+                                reviewPage.getTotalElements(),
+                                reviewPage.getTotalPages(),
+                                reviewPage.isFirst(),
+                                reviewPage.isLast()
+                );
+        }
 
     private double averageRating(List<com.example.ctu.entity.Review> reviews) {
         if (reviews.isEmpty()) {
