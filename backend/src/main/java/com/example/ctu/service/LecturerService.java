@@ -1,5 +1,16 @@
 package com.example.ctu.service;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+
 import com.example.ctu.dto.lecturer.LecturerDtos;
 import com.example.ctu.entity.Lecturer;
 import com.example.ctu.entity.Review;
@@ -7,12 +18,6 @@ import com.example.ctu.entity.enums.LecturerStatus;
 import com.example.ctu.exception.ResourceNotFoundException;
 import com.example.ctu.repository.LecturerRepository;
 import com.example.ctu.repository.ReviewRepository;
-import org.springframework.stereotype.Service;
-
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Service
 @SuppressWarnings("null")
@@ -41,10 +46,24 @@ public class LecturerService {
                 .collect(Collectors.toList());
     }
 
+    public Page<LecturerDtos.LecturerSummaryResponse> listPage(String facultyCode, String subjectCode, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("fullName").ascending());
+        Page<Lecturer> lecturers;
+        if (subjectCode != null && !subjectCode.isBlank()) {
+            lecturers = lecturerRepository.findBySubject_CodeAndStatus(subjectCode, LecturerStatus.ACTIVE, pageable);
+        } else if (facultyCode != null && !facultyCode.isBlank()) {
+            lecturers = lecturerRepository.findByFaculty_CodeAndStatus(facultyCode, LecturerStatus.ACTIVE, pageable);
+        } else {
+            lecturers = lecturerRepository.findByStatus(LecturerStatus.ACTIVE, pageable);
+        }
+        return lecturers.map(this::toSummary);
+    }
+
     public LecturerDtos.LecturerDetailResponse detail(Long id) {
         Lecturer lecturer = lecturerRepository.findDetailById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Giảng viên không tồn tại"));
         List<Review> reviews = reviewRepository.findByLecturer_IdAndApprovedOrderByCreatedAtDesc(id, true);
+        double averageRating = overallAverage(reviews);
         return new LecturerDtos.LecturerDetailResponse(
                 lecturer.getId(),
                 lecturer.getLecturerCode(),
@@ -52,6 +71,7 @@ public class LecturerService {
                 lecturer.getFaculty().getName(),
                 lecturer.getSubject() == null ? null : lecturer.getSubject().getName(),
                 lecturer.getStatus(),
+            averageRating,
                 average(reviews, Review::getRatingClarity),
                 average(reviews, Review::getRatingFairness),
                 average(reviews, Review::getRatingPressure),
@@ -62,6 +82,7 @@ public class LecturerService {
                 semesterComparisons(reviews),
                 reviews.stream().limit(10).map(review -> new LecturerDtos.ReviewItem(
                         review.getId(),
+                    (review.getRatingClarity() + review.getRatingFairness() + review.getRatingPressure() + review.getRatingWorkload() + review.getRatingSupport()) / 5.0,
                         review.getRatingClarity(),
                         review.getRatingFairness(),
                         review.getRatingPressure(),

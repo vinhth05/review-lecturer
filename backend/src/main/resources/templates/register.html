@@ -10,48 +10,66 @@
 <main class="page-shell">
   <header class="topbar">
     <div class="brand">
-      <strong>Đăng ký tài khoản</strong>
-      <span>Tạo tài khoản sinh viên CTU</span>
+      <div class="brand-title">Đăng ký tài khoản</div>
+      <div class="brand-sub">Tạo tài khoản sinh viên CTU</div>
     </div>
     <nav class="nav">
       <a href="/">Trang chủ</a>
-      <a href="/login">Đăng nhập</a>
+      <a th:if="${currentUser == null}" class="nav-primary" href="/login">Đăng nhập</a>
+      <a th:if="${currentUser != null}" class="nav-primary" href="/logout">Đăng xuất</a>
     </nav>
   </header>
 
-  <section class="hero" style="max-width:720px; margin-inline:auto;">
-    <h1>Đăng ký</h1>
-    <p>Nhập thông tin cơ bản, backend sẽ gửi OTP như luồng hiện tại.</p>
+  <section class="hero">
+    <div class="eyebrow">Tạo tài khoản mới</div>
+    <h1>Tham gia cộng đồng review giảng viên CTU.</h1>
+    <p>Thông tin của bạn sẽ được bảo vệ và chỉ dùng để xác thực.</p>
+  </section>
 
-    <div class="alert error" th:if="${error}" th:text="${error}"></div>
-    <div class="alert success" th:if="${success}" th:text="${success}"></div>
+  <section class="auth-shell">
+    <div class="hero-panel">
+      <div class="panel-title">Yêu cầu</div>
+      <p class="meta">Email phải thuộc domain sinh viên CTU. Sau khi đăng ký sẽ cần OTP xác thực.</p>
+      <div class="stat">
+        <span>Quy trình</span>
+        <strong>Đăng ký → OTP → Đăng nhập</strong>
+      </div>
+      <div class="stat">
+        <span>Thông tin</span>
+        <strong>Ẩn danh khi review</strong>
+      </div>
+    </div>
+    <div class="auth-card">
+      <div class="alert error" th:if="${error}" th:text="${error}"></div>
+      <div class="alert success" th:if="${success}" th:text="${success}"></div>
 
-    <form class="form" method="post" action="/register">
-      <div class="field">
-        <label>Mã số sinh viên</label>
-        <input type="text" name="studentCode" required>
-      </div>
-      <div class="field">
-        <label>Họ và tên</label>
-        <input type="text" name="fullName" required>
-      </div>
-      <div class="field">
-        <label>Email</label>
-        <input type="email" name="email" required>
-      </div>
-      <div class="field">
-        <label>Mật khẩu</label>
-        <input type="password" name="password" required>
-      </div>
-      <div class="field">
-        <label>Khoa</label>
-        <select name="facultyId" required>
-          <option value="">Chọn khoa</option>
-          <option th:each="faculty : ${faculties}" th:value="${faculty.id}" th:text="${faculty.name}"></option>
-        </select>
-      </div>
-      <button class="button" type="submit">Đăng ký</button>
-    </form>
+      <form class="form" method="post" action="/register">
+        <div class="field">
+          <label>Mã số sinh viên</label>
+          <input type="text" name="studentCode" required>
+        </div>
+        <div class="field">
+          <label>Họ và tên</label>
+          <input type="text" name="fullName" required>
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" name="email" required>
+        </div>
+        <div class="field">
+          <label>Mật khẩu</label>
+          <input type="password" name="password" required>
+        </div>
+        <div class="field">
+          <label>Khoa</label>
+          <select name="facultyId" required>
+            <option value="">Chọn khoa</option>
+            <option th:each="faculty : ${faculties}" th:value="${faculty.id}" th:text="${faculty.name}"></option>
+          </select>
+        </div>
+        <button class="button primary" type="submit">Đăng ký</button>
+      </form>
+    </div>
   </section>
 </main>
 </body>

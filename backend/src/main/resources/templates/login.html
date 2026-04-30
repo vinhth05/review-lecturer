@@ -10,33 +10,53 @@
 <main class="page-shell">
   <header class="topbar">
     <div class="brand">
-      <strong>Đăng nhập</strong>
-      <span>Dùng JWT cookie cho trình duyệt</span>
+      <div class="brand-title">Đăng nhập</div>
+      <div class="brand-sub">Dùng JWT cookie cho trải nghiệm nhanh hơn</div>
     </div>
     <nav class="nav">
       <a href="/">Trang chủ</a>
-      <a href="/register">Đăng ký</a>
+      <a th:if="${currentUser == null}" class="nav-primary" href="/register">Đăng ký</a>
+      <a th:if="${currentUser != null}" class="nav-primary" href="/logout">Đăng xuất</a>
     </nav>
   </header>
 
-  <section class="hero" style="max-width:640px; margin-inline:auto;">
-    <h1>Đăng nhập</h1>
-    <p>Form này gọi service backend và lưu token vào cookie để dùng cho HTML pages.</p>
+  <section class="hero">
+    <div class="eyebrow">Đăng nhập hệ thống</div>
+    <h1>Quay lại để viết review chuẩn xác.</h1>
+    <p>Chỉ cần email sinh viên CTU để truy cập và gửi đánh giá.</p>
+  </section>
 
-    <div class="alert error" th:if="${error}" th:text="${error}"></div>
-    <div class="alert success" th:if="${success}" th:text="${success}"></div>
+  <section class="auth-shell">
+    <div class="hero-panel">
+      <div class="panel-title">Lưu ý</div>
+      <p class="meta">
+        Tài khoản cần xác thực OTP trước khi gửi review. Hãy giữ đánh giá trung thực và tôn trọng.
+      </p>
+      <div class="stat">
+        <span>Quy tắc</span>
+        <strong>Không công kích cá nhân</strong>
+      </div>
+      <div class="stat">
+        <span>Quy tắc</span>
+        <strong>Ưu tiên trải nghiệm học</strong>
+      </div>
+    </div>
+    <div class="auth-card">
+      <div class="alert error" th:if="${error}" th:text="${error}"></div>
+      <div class="alert success" th:if="${success}" th:text="${success}"></div>
 
-    <form class="form" method="post" action="/login">
-      <div class="field">
-        <label>Email</label>
-        <input type="email" name="email" placeholder="student01@student.ctu.edu.vn" required>
-      </div>
-      <div class="field">
-        <label>Mật khẩu</label>
-        <input type="password" name="password" required>
-      </div>
-      <button class="button" type="submit">Đăng nhập</button>
-    </form>
+      <form class="form" method="post" action="/login">
+        <div class="field">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="student01@student.ctu.edu.vn" required>
+        </div>
+        <div class="field">
+          <label>Mật khẩu</label>
+          <input type="password" name="password" required>
+        </div>
+        <button class="button primary" type="submit">Đăng nhập</button>
+      </form>
+    </div>
   </section>
 </main>
 </body>

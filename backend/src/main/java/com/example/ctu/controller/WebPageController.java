@@ -12,7 +12,6 @@ import com.example.ctu.dto.auth.AuthDtos;
 import com.example.ctu.exception.BadRequestException;
 import com.example.ctu.repository.FacultyRepository;
 import com.example.ctu.service.AuthService;
-import com.example.ctu.service.LecturerService;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,12 +21,10 @@ public class WebPageController {
 
     private static final String AUTH_COOKIE = "AUTH_TOKEN";
 
-    private final LecturerService lecturerService;
     private final AuthService authService;
     private final FacultyRepository facultyRepository;
 
-    public WebPageController(LecturerService lecturerService, AuthService authService, FacultyRepository facultyRepository) {
-        this.lecturerService = lecturerService;
+    public WebPageController(AuthService authService, FacultyRepository facultyRepository) {
         this.authService = authService;
         this.facultyRepository = facultyRepository;
     }
@@ -35,7 +32,7 @@ public class WebPageController {
     @GetMapping({"/", "/home"})
     public String home(Model model, Authentication authentication) {
         addCommonModel(model, authentication);
-        model.addAttribute("lecturers", lecturerService.list(null, null).stream().limit(6).toList());
+        model.addAttribute("facultyCount", facultyRepository.count());
         return "home";
     }
 

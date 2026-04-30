@@ -1,9 +1,9 @@
 package com.example.ctu.dto.lecturer;
 
-import com.example.ctu.entity.enums.LecturerStatus;
-
 import java.time.Instant;
 import java.util.List;
+
+import com.example.ctu.entity.enums.LecturerStatus;
 
 public final class LecturerDtos {
     private LecturerDtos() {
@@ -37,6 +37,7 @@ public final class LecturerDtos {
             String facultyName,
             String subjectName,
             LecturerStatus status,
+            double averageRating,
             double averageClarity,
             double averageFairness,
             double averagePressure,
@@ -51,6 +52,7 @@ public final class LecturerDtos {
 
     public record ReviewItem(
             Long id,
+            double averageRating,
             int ratingClarity,
             int ratingFairness,
             int ratingPressure,
