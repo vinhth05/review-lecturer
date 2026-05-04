@@ -9,15 +9,17 @@
 <body>
 <main class="page-shell">
   <header class="topbar">
-    <div class="brand">
-      <div class="brand-title">Đăng nhập</div>
-      <div class="brand-sub">Dùng JWT cookie cho trải nghiệm nhanh hơn</div>
+    <div class="topbar-content">
+      <div class="brand">
+        <div class="brand-title">Đăng nhập</div>
+        <div class="brand-sub">Dùng JWT cookie cho trải nghiệm nhanh hơn</div>
+      </div>
+      <nav class="nav">
+        <a href="/">Trang chủ</a>
+        <a th:if="${currentUser == null}" class="nav-primary" href="/register">Đăng ký</a>
+        <a th:if="${currentUser != null}" class="nav-primary" href="/logout">Đăng xuất</a>
+      </nav>
     </div>
-    <nav class="nav">
-      <a href="/">Trang chủ</a>
-      <a th:if="${currentUser == null}" class="nav-primary" href="/register">Đăng ký</a>
-      <a th:if="${currentUser != null}" class="nav-primary" href="/logout">Đăng xuất</a>
-    </nav>
   </header>
 
   <section class="hero">
@@ -58,6 +60,8 @@
       </form>
     </div>
   </section>
+
+  <div th:replace="shared/footer :: footer"></div>
 </main>
 </body>
 </html>

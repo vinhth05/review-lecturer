@@ -9,16 +9,18 @@
 <body>
 <main class="page-shell">
   <header class="topbar">
-    <div class="brand">
-      <div class="brand-title">Danh sách giảng viên</div>
-      <div class="brand-sub">Tổng hợp từ cộng đồng sinh viên CTU</div>
+    <div class="topbar-content">
+      <div class="brand">
+        <div class="brand-title">Danh sách giảng viên</div>
+        <div class="brand-sub">Tổng hợp từ cộng đồng sinh viên CTU</div>
+      </div>
+      <nav class="nav">
+        <a href="/">Trang chủ</a>
+        <a th:if="${currentUser == null}" href="/login">Đăng nhập</a>
+        <a th:if="${currentUser == null}" class="nav-primary" href="/register">Đăng ký</a>
+        <a th:if="${currentUser != null}" class="nav-primary" href="/logout">Đăng xuất</a>
+      </nav>
     </div>
-    <nav class="nav">
-      <a href="/">Trang chủ</a>
-      <a th:if="${currentUser == null}" href="/login">Đăng nhập</a>
-      <a th:if="${currentUser == null}" class="nav-primary" href="/register">Đăng ký</a>
-      <a th:if="${currentUser != null}" class="nav-primary" href="/logout">Đăng xuất</a>
-    </nav>
   </header>
 
   <section class="hero">
@@ -79,10 +81,9 @@
             ·
             <span th:text="${lecturer.subjectName != null ? lecturer.subjectName : 'Chưa có môn'}">Môn</span>
           </div>
-          <div>
-            <span class="stars"><span th:style="${'width:' + ((lecturer.averageRating > 5.0 ? 5.0 : lecturer.averageRating) * 20) + '%'}">★★★★★</span></span>
-            <span style="margin-left:8px; font-weight:700;"> <span th:text="${#numbers.formatDecimal(lecturer.averageRating,1,2)}">4.2</span>/5</span>
-            <span class="meta compact" style="margin-left:10px;">(<span th:text="${lecturer.reviewCount}">0</span>)</span>
+          <div class="lecturer-rating">
+            <span class="rating-chip" th:text="|${#numbers.formatDecimal(lecturer.averageRating,1,2)}/5|">4.2/5</span>
+            <span class="rating-count">(<span th:text="${lecturer.reviewCount}">0</span> reviews)</span>
           </div>
         </div>
         <div class="card-actions">
@@ -132,6 +133,8 @@
          class="pagination-link pagination-nav">Tiếp &raquo;</a>
     </div>
   </section>
+
+  <div th:replace="shared/footer :: footer"></div>
 </main>
 <script>
   (function(){

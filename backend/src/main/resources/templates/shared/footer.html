@@ -1,0 +1,51 @@
+    <footer class="footer-section" xmlns:th="http://www.thymeleaf.org" th:fragment="footer">
+  <div class="footer-content">
+    <div class="footer-grid">
+      <!-- Brand & About -->
+      <div class="footer-block">
+        <h4 class="footer-title">CTU Rate My Lecturer</h4>
+        <p class="footer-description">Nền tảng giúp sinh viên CTU tìm kiếm và chia sẻ đánh giá về các giảng viên một cách công bằng và xây dựng.</p>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="footer-block">
+        <h5 class="footer-heading">Điều hướng</h5>
+        <ul class="footer-links">
+          <li><a href="/">Trang chủ</a></li>
+          <li><a href="/lecturers">Danh sách giảng viên</a></li>
+          <li><a th:if="${currentUser == null}" href="/login">Đăng nhập</a></li>
+          <li><a th:if="${currentUser == null}" href="/register">Đăng ký</a></li>
+        </ul>
+      </div>
+
+      <!-- Guidelines -->
+      <div class="footer-block">
+        <h5 class="footer-heading">Nguyên tắc</h5>
+        <ul class="footer-links">
+          <li><a href="#">Quy tắc ứng xử</a></li>
+          <li><a href="#">Chính sách bảo mật</a></li>
+          <li><a href="#">Điều khoản sử dụng</a></li>
+          <li><a href="#">Liên hệ hỗ trợ</a></li>
+        </ul>
+      </div>
+
+      <!-- Contact Info -->
+      <div class="footer-block">
+        <h5 class="footer-heading">Liên hệ</h5>
+        <p class="footer-contact">Email: <a href="mailto:support@cturate.com">support@cturate.com</a></p>
+        <p class="footer-contact">Trường: Can Tho University</p>
+        <p class="footer-contact">Dự án: Cộng đồng, phi lợi nhuận</p>
+      </div>
+    </div>
+
+    <!-- Bottom Section -->
+    <div class="footer-bottom">
+      <p class="footer-copyright">&copy; 2026 CTU Rate My Lecturer. Dự án cộng đồng phi lợi nhuận.</p>
+      <div class="footer-social">
+        <a href="#" class="social-link" title="Facebook">f</a>
+        <a href="#" class="social-link" title="Email">@</a>
+        <a href="#" class="social-link" title="GitHub">⚡</a>
+      </div>
+    </div>
+  </div>
+</footer>

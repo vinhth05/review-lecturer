@@ -9,38 +9,74 @@
 <body>
 <main class="page-shell">
   <header class="topbar">
-    <div class="brand">
-      <div class="brand-title" th:text="${lecturer.fullName}">Tên giảng viên</div>
-      <div class="brand-sub" th:text="${lecturer.facultyName}">Khoa</div>
+    <div class="topbar-content">
+      <div class="brand">
+        <div class="brand-title" th:text="${lecturer.fullName}">Tên giảng viên</div>
+        <div class="brand-sub" th:text="${lecturer.facultyName}">Khoa</div>
+      </div>
+      <nav class="nav">
+        <a href="/">Trang chủ</a>
+        <a href="/lecturers">Danh sách</a>
+        <a th:if="${currentUser == null}" class="nav-primary" href="/login">Đăng nhập</a>
+        <a th:if="${currentUser != null}" class="nav-primary" href="/logout">Đăng xuất</a>
+      </nav>
     </div>
-    <nav class="nav">
-      <a href="/">Trang chủ</a>
-      <a href="/lecturers">Danh sách</a>
-      <a th:if="${currentUser == null}" class="nav-primary" href="/login">Đăng nhập</a>
-      <a th:if="${currentUser != null}" class="nav-primary" href="/logout">Đăng xuất</a>
-    </nav>
   </header>
 
-  <section class="hero">
-    <div class="eyebrow">Hồ sơ giảng viên</div>
-    <h1 th:text="${lecturer.fullName}">Tên giảng viên</h1>
-    <p>
-      <span th:text="${lecturer.facultyName}">Khoa</span>
-      ·
-      <span th:text="${lecturer.subjectName != null ? lecturer.subjectName : 'Chưa có môn'}">Môn</span>
-    </p>
-    <div class="hero-actions">
-      <a class="button ghost" href="/lecturers">Back</a>
-      <a th:if="${currentUser == null}" class="button primary" href="/login">Viết review</a>
-      <a th:if="${currentRole == 'ROLE_STUDENT'}" class="button primary" href="#write-review">Viết review</a>
-      <span th:if="${currentUser != null and currentRole != 'ROLE_STUDENT'}" class="button primary button-disabled">Chỉ sinh viên được review</span>
-    </div>
-    <div style="margin-top:12px;">
-      <span class="stars" th:title="${#numbers.formatDecimal(lecturer.averageRating,1,2) + ' / 5'}">
-        <span th:style="${'width:' + ((lecturer.averageRating > 5.0 ? 5.0 : lecturer.averageRating) * 20) + '%'}">★★★★★</span>
-      </span>
-      <span style="margin-left:8px; font-weight:700;"> <span th:text="${#numbers.formatDecimal(lecturer.averageRating,1,2)}">4.2</span>/5</span>
-      <span class="meta compact" style="margin-left:10px;">(<span th:text="${lecturer.reviewCount}">0</span>)</span>
+  <section class="hero detail-hero">
+    <div class="hero-container detail-hero-grid">
+      <div class="hero-copy">
+        <div class="eyebrow">Hồ sơ giảng viên</div>
+        <h1 th:text="${lecturer.fullName}">Tên giảng viên</h1>
+        <p>
+          <span th:text="${lecturer.facultyName}">Khoa</span>
+          ·
+          <span th:text="${lecturer.subjectName != null ? lecturer.subjectName : 'Chưa có môn'}">Môn</span>
+        </p>
+        <div class="detail-badges">
+          <span class="detail-badge" th:text="${lecturer.status != null ? lecturer.status : 'Đang cập nhật'}">Trạng thái</span>
+          <span class="detail-badge detail-badge-soft">CTU community rated</span>
+        </div>
+        <div class="hero-actions">
+          <a class="button ghost" href="/lecturers">Quay lại danh sách</a>
+          <a th:if="${currentUser == null}" class="button primary" href="/login">Viết review</a>
+          <a th:if="${currentRole == 'ROLE_STUDENT'}" class="button primary" href="#write-review">Viết review</a>
+          <span th:if="${currentUser != null and currentRole != 'ROLE_STUDENT'}" class="button primary button-disabled">Chỉ sinh viên được review</span>
+        </div>
+      </div>
+
+      <aside class="hero-panel detail-summary-panel">
+        <div class="panel-title">Tổng quan</div>
+        <div class="detail-rating-row">
+          <div class="detail-rating-score" th:text="${#numbers.formatDecimal(lecturer.averageRating,1,2)}">4.2</div>
+          <div class="detail-rating-meta">
+            <span class="stars" th:title="${#numbers.formatDecimal(lecturer.averageRating,1,2) + ' / 5'}">
+              <span th:style="${'width:' + ((lecturer.averageRating > 5.0 ? 5.0 : lecturer.averageRating) * 20) + '%'}">★★★★★</span>
+            </span>
+            <div class="meta compact">
+              <span th:text="${lecturer.reviewCount}">0</span> reviews
+            </div>
+          </div>
+        </div>
+        <div class="detail-summary-grid">
+          <div class="detail-summary-item">
+            <span>Chuyên môn</span>
+            <strong th:text="${lecturer.subjectName != null ? lecturer.subjectName : 'Chưa có môn'}">Môn</strong>
+          </div>
+          <div class="detail-summary-item">
+            <span>Khoa</span>
+            <strong th:text="${lecturer.facultyName}">Khoa</strong>
+          </div>
+          <div class="detail-summary-item">
+            <span>Phạm vi</span>
+            <strong>CTU</strong>
+          </div>
+          <div class="detail-summary-item">
+            <span>Điểm tổng hợp</span>
+            <strong th:text="|${#numbers.formatDecimal(lecturer.averageRating, 1, 2)}/5|">0/5</strong>
+          </div>
+        </div>
+      </aside>
     </div>
   </section>
 
@@ -52,7 +88,7 @@
       </div>
       <span class="rating-chip" th:text="|${#numbers.formatDecimal(lecturer.averageRating, 1, 2)}/5|">0/5</span>
     </div>
-    <div class="metric-grid">
+    <div class="metric-grid detail-metric-grid">
       <div class="metric">
         <span>Độ rõ ràng</span>
         <strong th:text="|${#numbers.formatDecimal(lecturer.averageClarity, 1, 2)}/5|">0/5</strong>
@@ -87,7 +123,7 @@
         <p class="section-sub">Số lượng review theo mức sao.</p>
       </div>
     </div>
-    <div class="metric-grid">
+    <div class="metric-grid detail-distribution-grid">
       <div class="metric" th:each="item : ${lecturer.distribution}">
         <span th:text="${item.score} + ' sao'">5 sao</span>
         <strong th:text="${item.count}">0</strong>
@@ -304,6 +340,8 @@
       Chưa có review nào cho giảng viên này.
     </div>
   </section>
+
+  <div th:replace="shared/footer :: footer"></div>
 </main>
 <script>
   (function setupReviewPresets() {

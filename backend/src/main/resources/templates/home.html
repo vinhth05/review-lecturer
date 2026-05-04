@@ -9,17 +9,19 @@
 <body>
 <main class="page-shell">
   <header class="topbar">
-    <div class="brand">
-      <div class="brand-title">CTU Rate My Lecturer</div>
-      <div class="brand-sub">Trang giới thiệu và tra cứu giảng viên dành cho sinh viên CTU</div>
+    <div class="topbar-content">
+      <div class="brand">
+        <div class="brand-title">CTU Rate My Lecturer</div>
+        <div class="brand-sub">Trang giới thiệu và tra cứu giảng viên dành cho sinh viên CTU</div>
+      </div>
+      <nav class="nav">
+        <a href="/">Trang chủ</a>
+        <a href="/lecturers">Giảng viên</a>
+        <a th:if="${currentUser == null}" href="/login">Đăng nhập</a>
+        <a th:if="${currentUser == null}" class="nav-primary" href="/register">Đăng ký</a>
+        <a th:if="${currentUser != null}" class="nav-primary" href="/logout">Đăng xuất</a>
+      </nav>
     </div>
-    <nav class="nav">
-      <a href="/">Trang chủ</a>
-      <a href="/lecturers">Giảng viên</a>
-      <a th:if="${currentUser == null}" href="/login">Đăng nhập</a>
-      <a th:if="${currentUser == null}" class="nav-primary" href="/register">Đăng ký</a>
-      <a th:if="${currentUser != null}" class="nav-primary" href="/logout">Đăng xuất</a>
-    </nav>
   </header>
 
   <section class="hero hero-grid">
@@ -120,7 +122,7 @@
     </div>
   </section>
 
-  <p class="footer">Dự án cộng đồng phi lợi nhuận · CTU Rate My Lecturer</p>
+  <div th:replace="shared/footer :: footer"></div>
 </main>
 </body>
 </html>
