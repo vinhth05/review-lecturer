@@ -129,6 +129,53 @@ background: var(--primary-dark);
 color: white;
 }
 
+/* Quick-link and nav call-to-action styles for header and hero links */
+.quick-link,
+.nav a.quick-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 14px;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--primary);
+	font-weight: 700;
+	border: 1px solid transparent;
+	transition: var(--transition);
+	text-decoration: none;
+}
+
+.quick-link:hover,
+.nav a.quick-link:hover {
+	background: rgba(37, 99, 235, 0.06);
+	transform: translateY(-2px);
+	box-shadow: var(--shadow-sm);
+}
+
+/* Make existing nav primary buttons a bit more prominent */
+.nav a.nav-primary {
+	padding: 8px 16px;
+	box-shadow: 0 6px 14px rgba(37, 99, 235, 0.08);
+	border: 1px solid rgba(37, 99, 235, 0.08);
+}
+
+/* Ensure header quick actions also pick up links without classes (fallback) */
+.nav a[href="/login"],
+.nav a[href="/register"],
+.nav a[href="/lecturers"] {
+	color: var(--text-secondary);
+	padding: 8px 12px;
+	border-radius: var(--radius);
+	text-decoration: none;
+}
+
+.nav a[href="/login"]:hover,
+.nav a[href="/register"]:hover,
+.nav a[href="/lecturers"]:hover {
+	color: var(--primary);
+	background: var(--bg-tertiary);
+}
+
 /* Page Shell */
 .page-shell {
 width: 100%;
@@ -1529,4 +1576,58 @@ min-height: 100vh;
 
 main {
 flex: 1;
+}
+
+/* Footer - rules styling */
+.footer-rules {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.footer-rules .rule-item a {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	text-decoration: none;
+	color: inherit;
+}
+
+.rule-icon {
+	flex: 0 0 40px;
+	width: 40px;
+	height: 40px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 10px;
+	background: var(--primary);
+	color: #fff;
+	box-shadow: 0 10px 24px rgba(37, 99, 235, 0.12);
+	transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.rule-icon svg {
+	width: 18px;
+	height: 18px;
+	fill: currentColor;
+}
+
+.rule-text {
+	font-size: 14px;
+	color: var(--text-secondary);
+	line-height: 1.4;
+}
+
+.rule-item:hover .rule-icon {
+	transform: translateY(-3px);
+	box-shadow: 0 18px 40px rgba(37, 99, 235, 0.16);
+}
+
+@media (max-width: 480px) {
+    .rule-icon { width: 36px; height: 36px; flex: 0 0 36px; }
+    .rule-text { font-size: 13px; }
 }
