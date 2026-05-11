@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xác thực OTP</title>
+  <link rel="stylesheet" href="/css/site.css">
+  <style>
+    .otp-timer {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--primary);
+      text-align: center;
+      margin: 20px 0;
+      font-family: 'Poppins', monospace;
+    }
+    .otp-timer.expired {
+      color: var(--danger);
+    }
+    .otp-input {
+      font-size: 24px !important;
+      letter-spacing: 8px;
+      text-align: center;
+      font-weight: 600;
+      font-family: monospace;
+    }
+    .timer-label {
+      text-align: center;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .otp-message {
+      text-align: center;
+      padding: 12px;
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+<main class="page-shell">
+  <header class="topbar">
+    <div class="topbar-content">
+      <div class="brand">
+        <div class="brand-title">Xác thực OTP</div>
+        <div class="brand-sub">Nhập mã OTP đã được gửi đến email của bạn</div>
+      </div>
+      <nav class="nav">
+        <a href="/">Trang chủ</a>
+        <a href="/login">Đăng nhập</a>
+        <a class="nav-primary" href="/register">Đăng ký lại</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="eyebrow">Bước cuối cùng</div>
+    <h1>Xác nhận địa chỉ email.</h1>
+    <p>Mã OTP đã được gửi đến <strong th:text="${email}">email@example.com</strong>. Nhập mã để hoàn tất đăng ký.</p>
+  </section>
+
+  <section class="auth-shell">
+    <div class="hero-panel">
+      <div class="panel-title">Hướng dẫn</div>
+      <p class="meta">1. Kiểm tra email trong hộp Inbox hoặc Spam. 2. Sao chép mã OTP 6 chữ số. 3. Dán vào ô bên dưới.</p>
+      <div class="stat">
+        <span>Thời gian</span>
+        <strong>Có hạn 3 phút</strong>
+      </div>
+      <div class="stat">
+        <span>Không nhận được?</span>
+        <a href="/register" style="color: var(--primary); text-decoration: none; font-weight: 600;">Đăng ký lại</a>
+      </div>
+    </div>
+
+    <div class="auth-card">
+      <div class="alert error" th:if="${error}" th:text="${error}"></div>
+      <div class="alert success" th:if="${success}" th:text="${success}"></div>
+
+      <div class="timer-label">Thời gian còn lại:</div>
+      <div class="otp-timer" id="timerDisplay">3:00</div>
+
+      <form class="form" method="post" action="/verify-otp">
+        <input type="hidden" name="email" th:value="${email}">
+        
+        <div class="field">
+          <label>Mã OTP (6 chữ số)</label>
+          <input 
+            type="text" 
+            name="otp" 
+            class="otp-input"
+            id="otpInput"
+            placeholder="000000" 
+            maxlength="6"
+            inputmode="numeric"
+            pattern="[0-9]{6}"
+            required
+            autocomplete="off">
+        </div>
+
+        <button class="button primary" type="submit" id="submitBtn">Xác thực OTP</button>
+        
+        <div style="text-align: center; margin-top: 16px;">
+          <a href="/register" style="color: var(--text-secondary); text-decoration: none; font-size: 14px;">Sử dụng email khác? Đăng ký lại</a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <div th:replace="shared/footer :: footer"></div>
+</main>
+
+<script>
+  // 3-minute countdown timer
+  const OTP_TIMEOUT_MINUTES = 3;
+  const OTP_TIMEOUT_MS = OTP_TIMEOUT_MINUTES * 60 * 1000;
+  const timerDisplay = document.getElementById('timerDisplay');
+  const otpInput = document.getElementById('otpInput');
+  const submitBtn = document.getElementById('submitBtn');
+  
+  let startTime = Date.now();
+  const endTime = startTime + OTP_TIMEOUT_MS;
+
+  function updateTimer() {
+    const now = Date.now();
+    const remainingMs = endTime - now;
+
+    if (remainingMs <= 0) {
+      timerDisplay.textContent = '0:00';
+      timerDisplay.classList.add('expired');
+      otpInput.disabled = true;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'OTP đã hết hạn. Đăng ký lại.';
+      clearInterval(timerInterval);
+      return;
+    }
+
+    const totalSeconds = Math.floor(remainingMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    
+    timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Change color as time runs out
+    if (remainingMs < 60000) {
+      timerDisplay.style.color = 'var(--warning)';
+    }
+    if (remainingMs < 30000) {
+      timerDisplay.style.color = 'var(--danger)';
+    }
+  }
+
+  // Update timer immediately and then every second
+  updateTimer();
+  const timerInterval = setInterval(updateTimer, 1000);
+
+  // Auto-focus OTP input
+  otpInput.focus();
+
+  // Only allow numeric input
+  otpInput.addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 6);
+  });
+</script>
+</body>
+</html>

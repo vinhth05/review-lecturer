@@ -16,6 +16,7 @@
       </div>
       <nav class="nav">
         <a href="/">Trang chủ</a>
+        <a th:if="${currentUser != null}" href="/profile">Hồ sơ</a>
         <a th:if="${currentUser == null}" class="nav-primary" href="/login">Đăng nhập</a>
         <a th:if="${currentUser != null}" class="nav-primary" href="/logout">Đăng xuất</a>
       </nav>
@@ -30,15 +31,15 @@
 
   <section class="auth-shell">
     <div class="hero-panel">
-      <div class="panel-title">Yêu cầu</div>
-      <p class="meta">Email phải thuộc domain sinh viên CTU. Sau khi đăng ký sẽ cần OTP xác thực.</p>
+      <div class="panel-title">Quy trình</div>
+      <p class="meta">Sau khi đăng ký, bạn sẽ nhận OTP qua email. Bạn có 5 phút để xác thực trước khi đăng nhập.</p>
       <div class="stat">
-        <span>Quy trình</span>
-        <strong>Đăng ký → OTP → Đăng nhập</strong>
+        <span>Các bước</span>
+        <strong>Đăng ký → Email OTP → Xác thực → Đăng nhập</strong>
       </div>
       <div class="stat">
-        <span>Thông tin</span>
-        <strong>Ẩn danh khi review</strong>
+        <span>Quyền riêng tư</span>
+        <strong>Ẩn danh khi gửi review</strong>
       </div>
     </div>
     <div class="auth-card">

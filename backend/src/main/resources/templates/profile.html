@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hồ sơ cá nhân</title>
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page-shell">
+  <header class="topbar">
+    <div class="topbar-content">
+      <div class="brand">
+        <div class="brand-title">Hồ sơ cá nhân</div>
+        <div class="brand-sub">Quản lý thông tin và mật khẩu của bạn</div>
+      </div>
+      <nav class="nav">
+        <a href="/">Trang chủ</a>
+        <a href="/lecturers">Giảng viên</a>
+        <a class="nav-primary" href="/logout">Đăng xuất</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="eyebrow">Tài khoản</div>
+    <h1>Xin chào, <span th:text="${profile.fullName}">Sinh viên CTU</span>.</h1>
+    <p>Bạn có thể cập nhật thông tin hiển thị và thay đổi mật khẩu tại đây.</p>
+  </section>
+
+  <section class="section">
+    <div class="alert error" th:if="${error}" th:text="${error}"></div>
+    <div class="alert success" th:if="${success}" th:text="${success}"></div>
+
+    <div class="profile-grid">
+      <article class="auth-card">
+        <h2 class="section-title">Thông tin cá nhân</h2>
+        <p class="section-sub">Email và mã số sinh viên được dùng để định danh tài khoản.</p>
+        <form class="form" method="post" action="/profile/update">
+          <div class="field">
+            <label>Mã số sinh viên</label>
+            <input th:value="${profile.studentCode}" type="text" readonly>
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input th:value="${profile.email}" type="email" readonly>
+          </div>
+          <div class="field">
+            <label>Họ và tên</label>
+            <input name="fullName" th:value="${profile.fullName}" type="text" required>
+          </div>
+          <div class="field">
+            <label>Khoa</label>
+            <select name="facultyId" required>
+              <option th:each="faculty : ${faculties}"
+                      th:value="${faculty.id}"
+                      th:text="${faculty.name}"
+                      th:selected="${faculty.id == selectedFacultyId}"></option>
+            </select>
+          </div>
+          <button class="button primary" type="submit">Lưu thông tin</button>
+        </form>
+      </article>
+
+      <article class="auth-card">
+        <h2 class="section-title">Đổi mật khẩu</h2>
+        <p class="section-sub">Mật khẩu mới nên có ít nhất 6 ký tự để tăng bảo mật.</p>
+        <form class="form" method="post" action="/profile/change-password">
+          <div class="field">
+            <label>Mật khẩu hiện tại</label>
+            <input name="currentPassword" type="password" required>
+          </div>
+          <div class="field">
+            <label>Mật khẩu mới</label>
+            <input name="newPassword" type="password" minlength="6" required>
+          </div>
+          <div class="field">
+            <label>Xác nhận mật khẩu mới</label>
+            <input name="confirmPassword" type="password" minlength="6" required>
+          </div>
+          <button class="button primary" type="submit">Đổi mật khẩu</button>
+          <a class="auth-helper-link" href="/forgot-password">Quên mật khẩu? Đặt lại bằng OTP</a>
+        </form>
+      </article>
+    </div>
+  </section>
+
+  <div th:replace="shared/footer :: footer"></div>
+</main>
+</body>
+</html>

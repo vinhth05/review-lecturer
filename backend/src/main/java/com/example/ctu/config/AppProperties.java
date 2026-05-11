@@ -1,9 +1,9 @@
 package com.example.ctu.config;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "app")
 public record AppProperties(
@@ -15,7 +15,7 @@ public record AppProperties(
     public record Jwt(String secret, long expirationMinutes) {
     }
 
-    public record Otp(long ttlMinutes) {
+    public record Otp(long ttlMinutes, long rateLimitSeconds) {
     }
 
     public record Review(int rateLimitPerDay, String secretKey, List<String> toxicKeywords) {

@@ -17,6 +17,7 @@
       <nav class="nav">
         <a href="/">Trang chủ</a>
         <a href="/lecturers">Giảng viên</a>
+        <a th:if="${currentUser != null}" href="/profile">Hồ sơ</a>
         <a th:if="${currentUser == null}" href="/login">Đăng nhập</a>
         <a th:if="${currentUser == null}" class="nav-primary" href="/register">Đăng ký</a>
         <a th:if="${currentUser != null}" class="nav-primary" href="/logout">Đăng xuất</a>
@@ -39,6 +40,7 @@
       </div>
       <div class="quick-links">
         <a class="quick-link" href="/lecturers">Xem danh sách</a>
+        <a th:if="${currentUser != null}" class="quick-link" href="/profile">Hồ sơ của tôi</a>
         <a th:if="${currentUser == null}" class="quick-link" href="/login">Đăng nhập</a>
         <a th:if="${currentUser == null}" class="quick-link" href="/register">Đăng ký</a>
         <a th:if="${currentUser != null}" class="quick-link" href="/logout">Đăng xuất</a>

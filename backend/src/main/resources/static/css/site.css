@@ -970,6 +970,28 @@ background: var(--bg-primary);
 color: var(--text-tertiary);
 }
 
+.auth-helper-link {
+display: inline-flex;
+align-items: center;
+width: fit-content;
+font-size: 14px;
+font-weight: 600;
+color: var(--primary);
+text-decoration: none;
+}
+
+.auth-helper-link:hover {
+text-decoration: underline;
+}
+
+.profile-grid {
+max-width: 1200px;
+margin: 0 auto;
+display: grid;
+grid-template-columns: repeat(2, minmax(0, 1fr));
+gap: 24px;
+}
+
 /* Lecturer Cards */
 .lecturer-grid,
 .lecturer-list {
@@ -1453,6 +1475,10 @@ align-self: flex-start;
 }
 
 .auth-shell {
+grid-template-columns: 1fr;
+}
+
+.profile-grid {
 grid-template-columns: 1fr;
 }
 

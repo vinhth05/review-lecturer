@@ -1,5 +1,7 @@
 package com.example.ctu.service;
 
+import java.time.Instant;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -9,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.ctu.config.AppProperties;
 import com.example.ctu.dto.auth.AuthDtos;
 import com.example.ctu.entity.Faculty;
 import com.example.ctu.entity.User;
@@ -31,6 +34,8 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final OtpService otpService;
+    private final com.example.ctu.repository.PendingRegistrationRepository pendingRegistrationRepository;
+    private final AppProperties properties;
 
     private final String adminSeedEmail;
     private final String adminSeedPassword;
@@ -56,6 +61,8 @@ public class AuthService {
                        AuthenticationManager authenticationManager,
                        JwtService jwtService,
                        OtpService otpService,
+                       com.example.ctu.repository.PendingRegistrationRepository pendingRegistrationRepository,
+                       AppProperties properties,
                        @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.admin.email:admin@ctu.edu.vn}") String adminSeedEmail,
                        @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.admin.password:Admin@123}") String adminSeedPassword,
                        @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.admin.student-code:AD0001}") String adminSeedStudentCode,
@@ -77,6 +84,8 @@ public class AuthService {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.otpService = otpService;
+        this.pendingRegistrationRepository = pendingRegistrationRepository;
+        this.properties = properties;
         this.adminSeedEmail = adminSeedEmail;
         this.adminSeedPassword = adminSeedPassword;
         this.adminSeedStudentCode = adminSeedStudentCode;
@@ -95,10 +104,42 @@ public class AuthService {
     }
 
     @Transactional
-    public String register(AuthDtos.RegisterRequest request) {
-        if (!request.email().endsWith("@student.ctu.edu.vn")) {
-            throw new BadRequestException("Email phải thuộc domain @student.ctu.edu.vn");
+    public String registerTemporarily(AuthDtos.RegisterRequest request) {
+        // Check if email/studentCode already exist in database
+        if (userRepository.existsByEmail(request.email())) {
+            throw new BadRequestException("Email đã tồn tại");
         }
+        if (userRepository.existsByStudentCode(request.studentCode())) {
+            throw new BadRequestException("Mã số sinh viên đã tồn tại");
+        }
+        
+        // Validate faculty exists
+        facultyRepository.findById(request.facultyId())
+                .orElseThrow(() -> new ResourceNotFoundException("Khoa không tồn tại"));
+        
+        // Store registration data as PendingRegistration row (NOT yet a User)
+        Instant now = Instant.now();
+        Instant expiresAt = now.plusSeconds(properties.otp().ttlMinutes() * 60);
+        com.example.ctu.entity.PendingRegistration pending = com.example.ctu.entity.PendingRegistration.builder()
+            .studentCode(request.studentCode())
+            .fullName(request.fullName())
+            .email(request.email())
+            .passwordHash(passwordEncoder.encode(request.password()))
+            .facultyId(request.facultyId())
+            .createdAt(now)
+            .expiresAt(expiresAt)
+            .build();
+        pendingRegistrationRepository.save(pending);
+        LOGGER.info("Pending registration saved for email: {}", request.email());
+        
+        // Generate and send OTP
+        otpService.generateAndSend(request.email());
+        
+        return "Đăng ký thành công. Vui lòng kiểm tra email để xác thực OTP.";
+    }
+
+    @Transactional
+    public String register(AuthDtos.RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new BadRequestException("Email đã tồn tại");
         }
@@ -123,12 +164,38 @@ public class AuthService {
 
     @Transactional
     public AuthDtos.AuthResponse verify(AuthDtos.VerifyRequest request) {
+        // Verify OTP
         otpService.verify(request.email(), request.otp());
-        User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
-        user.setVerified(true);
-        userRepository.save(user);
-        return createAuthResponse(user);
+        LOGGER.info("OTP verified for email: {}", request.email());
+        
+        // Check if this is a new registration (pending registration in DB)
+        var pendingOpt = pendingRegistrationRepository.findByEmail(request.email());
+        if (pendingOpt.isPresent()) {
+            var pending = pendingOpt.get();
+            LOGGER.info("Creating new user account for email: {}", request.email());
+            Faculty faculty = facultyRepository.findById(pending.getFacultyId())
+                .orElseThrow(() -> new ResourceNotFoundException("Khoa không tồn tại"));
+            User user = User.builder()
+                .studentCode(pending.getStudentCode())
+                .fullName(pending.getFullName())
+                .email(pending.getEmail())
+                .passwordHash(pending.getPasswordHash())
+                .faculty(faculty)
+                .role(Role.STUDENT)
+                .verified(true)  // Already verified via OTP
+                .build();
+            userRepository.save(user);
+            // remove pending
+            pendingRegistrationRepository.deleteByEmail(request.email());
+            return createAuthResponse(user);
+        } else {
+            // Existing user - just mark as verified (for password reset flow)
+            User user = userRepository.findByEmail(request.email())
+                    .orElseThrow(() -> new BadRequestException("OTP hoặc email không hợp lệ"));
+            user.setVerified(true);
+            userRepository.save(user);
+            return createAuthResponse(user);
+        }
     }
 
     public AuthDtos.AuthResponse login(AuthDtos.LoginRequest request) {
@@ -157,6 +224,60 @@ public class AuthService {
         }
         LOGGER.info("Login successful for: {}", request.email());
         return createAuthResponse(user);
+    }
+
+    @Transactional
+    public AuthDtos.ProfileResponse updateProfile(Long userId, AuthDtos.UpdateProfileRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
+        Faculty faculty = facultyRepository.findById(request.facultyId())
+                .orElseThrow(() -> new ResourceNotFoundException("Khoa không tồn tại"));
+
+        user.setFullName(request.fullName().trim());
+        user.setFaculty(faculty);
+        userRepository.save(user);
+        return toProfileResponse(user);
+    }
+
+    @Transactional
+    public String changePassword(Long userId, AuthDtos.ChangePasswordRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new BadRequestException("Mật khẩu hiện tại không đúng");
+        }
+        if (!request.newPassword().equals(request.confirmPassword())) {
+            throw new BadRequestException("Mật khẩu xác nhận không khớp");
+        }
+        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+            throw new BadRequestException("Mật khẩu mới phải khác mật khẩu hiện tại");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+        return "Đổi mật khẩu thành công";
+    }
+
+    public String requestPasswordReset(String email) {
+        userRepository.findByEmail(email)
+                .filter(User::isVerified)
+                .ifPresent(user -> otpService.generateAndSend(user.getEmail()));
+        return "Nếu email tồn tại trong hệ thống, mã OTP đã được gửi.";
+    }
+
+    @Transactional
+    public String resetPassword(AuthDtos.ResetPasswordRequest request) {
+        if (!request.newPassword().equals(request.confirmPassword())) {
+            throw new BadRequestException("Mật khẩu xác nhận không khớp");
+        }
+
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new BadRequestException("OTP hoặc email không hợp lệ"));
+        otpService.verify(request.email(), request.otp());
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+        return "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.";
     }
 
     @Transactional
@@ -213,5 +334,16 @@ public class AuthService {
     private AuthDtos.AuthResponse createAuthResponse(User user) {
         String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name());
         return new AuthDtos.AuthResponse(token, user.getRole(), user.isVerified(), user.getFullName(), user.getFaculty().getName());
+    }
+
+    private AuthDtos.ProfileResponse toProfileResponse(User user) {
+        return new AuthDtos.ProfileResponse(
+                user.getStudentCode(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getFaculty().getName(),
+                user.getRole(),
+                user.isVerified()
+        );
     }
 }
