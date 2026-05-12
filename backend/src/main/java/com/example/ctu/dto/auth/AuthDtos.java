@@ -15,7 +15,8 @@ public final class AuthDtos {
             @NotBlank String studentCode,
             @NotBlank String fullName,
             @Email @NotBlank String email,
-            @NotBlank String password,
+            @NotBlank @Size(min = 6, message = "Mật khẩu phải có ít nhất 6 ký tự") String password,
+            @NotBlank String confirmPassword,
             @NotNull Long facultyId
     ) {
     }

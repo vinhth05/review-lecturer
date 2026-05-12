@@ -2,6 +2,7 @@ package com.example.ctu.controller;
 
 import java.nio.charset.StandardCharsets;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,7 +18,6 @@ import com.example.ctu.exception.BadRequestException;
 import com.example.ctu.repository.FacultyRepository;
 import com.example.ctu.service.AuthService;
 import com.example.ctu.service.CurrentUserService;
-import com.example.ctu.service.RateLimitService;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,13 +30,16 @@ public class WebPageController {
     private final AuthService authService;
     private final FacultyRepository facultyRepository;
     private final CurrentUserService currentUserService;
-    private final RateLimitService rateLimitService;
+    private final int otpTtlMinutes;
 
-    public WebPageController(AuthService authService, FacultyRepository facultyRepository, CurrentUserService currentUserService, RateLimitService rateLimitService) {
+    public WebPageController(AuthService authService,
+                             FacultyRepository facultyRepository,
+                             CurrentUserService currentUserService,
+                             @Value("${app.otp.ttl-minutes:5}") int otpTtlMinutes) {
         this.authService = authService;
         this.facultyRepository = facultyRepository;
         this.currentUserService = currentUserService;
-        this.rateLimitService = rateLimitService;
+        this.otpTtlMinutes = otpTtlMinutes;
     }
 
     @GetMapping({"/", "/home"})
@@ -81,35 +84,71 @@ public class WebPageController {
     public String forgotPasswordSubmit(@RequestParam String email,
                                        RedirectAttributes redirectAttributes) {
         try {
-            rateLimitService.checkRateLimit(email);
             authService.requestPasswordReset(email);
-            rateLimitService.recordOtpSent(email);
-            redirectAttributes.addFlashAttribute("success", "Nếu email tồn tại trong hệ thống, mã OTP đã được gửi.");
+            redirectAttributes.addFlashAttribute("success", "Nếu email tồn tại trong hệ thống, mã OTP đã được gửi. Hãy xác thực OTP để mở khóa trang đổi mật khẩu.");
+            return "redirect:/reset-password?email=" + java.net.URLEncoder.encode(email, StandardCharsets.UTF_8);
         } catch (BadRequestException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
+            return "redirect:/forgot-password";
         }
-        return "redirect:/reset-password";
     }
 
     @GetMapping("/reset-password")
-    public String resetPasswordPage(Model model, Authentication authentication) {
+    public String resetPasswordPage(@RequestParam(required = false) String email,
+                                    @RequestParam(required = false) String token,
+                                    Model model,
+                                    Authentication authentication,
+                                    RedirectAttributes redirectAttributes) {
+        if (token != null && !token.isBlank()) {
+            try {
+                String verifiedEmail = authService.resolvePasswordResetEmail(token);
+                addCommonModel(model, authentication);
+                model.addAttribute("email", verifiedEmail);
+                model.addAttribute("resetToken", token);
+                model.addAttribute("otpVerified", true);
+                return "reset-password";
+            } catch (BadRequestException exception) {
+                redirectAttributes.addFlashAttribute("error", exception.getMessage());
+                return "redirect:/forgot-password";
+            }
+        }
+
+        if (email == null || email.isBlank()) {
+            return "redirect:/forgot-password";
+        }
+
         addCommonModel(model, authentication);
+        model.addAttribute("email", email);
+        model.addAttribute("otpVerified", false);
         return "reset-password";
     }
 
+    @PostMapping("/reset-password/verify")
+    public String verifyResetPasswordOtp(@RequestParam String email,
+                                         @RequestParam String otp,
+                                         RedirectAttributes redirectAttributes) {
+        try {
+            String token = authService.verifyPasswordResetOtp(email, otp);
+            redirectAttributes.addFlashAttribute("success", "Xác thực OTP thành công. Bạn có thể đặt lại mật khẩu.");
+            return "redirect:/reset-password?token=" + java.net.URLEncoder.encode(token, StandardCharsets.UTF_8);
+        } catch (BadRequestException exception) {
+            redirectAttributes.addFlashAttribute("error", exception.getMessage());
+            return "redirect:/reset-password?email=" + java.net.URLEncoder.encode(email, StandardCharsets.UTF_8);
+        }
+    }
+
     @PostMapping("/reset-password")
-    public String resetPasswordSubmit(@RequestParam String email,
-                                      @RequestParam String otp,
+    public String resetPasswordSubmit(@RequestParam String token,
                                       @RequestParam String newPassword,
                                       @RequestParam String confirmPassword,
                                       RedirectAttributes redirectAttributes) {
         try {
-            authService.resetPassword(new AuthDtos.ResetPasswordRequest(email, otp, newPassword, confirmPassword));
+            authService.resetPasswordWithToken(token, newPassword, confirmPassword);
             redirectAttributes.addFlashAttribute("success", "Đặt lại mật khẩu thành công. Vui lòng đăng nhập.");
             return "redirect:/login";
         } catch (BadRequestException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
-            return "redirect:/reset-password";
+            return "redirect:/reset-password?token=" + java.net.URLEncoder.encode(token, StandardCharsets.UTF_8);
         }
     }
 
@@ -125,13 +164,12 @@ public class WebPageController {
                                  @RequestParam String fullName,
                                  @RequestParam String email,
                                  @RequestParam String password,
+                                 @RequestParam String confirmPassword,
                                  @RequestParam Long facultyId,
                                  RedirectAttributes redirectAttributes) {
         try {
-            rateLimitService.checkRateLimit(email);
             // Store registration temporarily and send OTP (don't save to DB yet)
-            authService.registerTemporarily(new AuthDtos.RegisterRequest(studentCode, fullName, email, password, facultyId));
-            rateLimitService.recordOtpSent(email);
+            authService.registerTemporarily(new AuthDtos.RegisterRequest(studentCode, fullName, email, password, confirmPassword, facultyId));
             redirectAttributes.addFlashAttribute("email", email);
             redirectAttributes.addFlashAttribute("success", "Đăng ký thành công. Vui lòng nhập OTP được gửi đến email.");
             return "redirect:/verify-otp?email=" + java.net.URLEncoder.encode(email, StandardCharsets.UTF_8);
@@ -148,7 +186,7 @@ public class WebPageController {
         }
         addCommonModel(model, authentication);
         model.addAttribute("email", email);
-        model.addAttribute("otpTtlMinutes", 3); // 3 minute countdown
+        model.addAttribute("otpTtlMinutes", otpTtlMinutes);
         return "verify-otp";
     }
 

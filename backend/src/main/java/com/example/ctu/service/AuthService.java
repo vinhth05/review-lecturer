@@ -18,6 +18,7 @@ import com.example.ctu.entity.User;
 import com.example.ctu.entity.enums.Role;
 import com.example.ctu.exception.BadRequestException;
 import com.example.ctu.exception.ResourceNotFoundException;
+import com.example.ctu.otp.OtpService;
 import com.example.ctu.repository.FacultyRepository;
 import com.example.ctu.repository.UserRepository;
 import com.example.ctu.security.JwtService;
@@ -105,6 +106,9 @@ public class AuthService {
 
     @Transactional
     public String registerTemporarily(AuthDtos.RegisterRequest request) {
+        if (!request.password().equals(request.confirmPassword())) {
+            throw new BadRequestException("Mật khẩu xác nhận không khớp");
+        }
         // Check if email/studentCode already exist in database
         if (userRepository.existsByEmail(request.email())) {
             throw new BadRequestException("Email đã tồn tại");
@@ -133,13 +137,16 @@ public class AuthService {
         LOGGER.info("Pending registration saved for email: {}", request.email());
         
         // Generate and send OTP
-        otpService.generateAndSend(request.email());
+        otpService.sendOtp(request.email());
         
         return "Đăng ký thành công. Vui lòng kiểm tra email để xác thực OTP.";
     }
 
     @Transactional
     public String register(AuthDtos.RegisterRequest request) {
+        if (!request.password().equals(request.confirmPassword())) {
+            throw new BadRequestException("Mật khẩu xác nhận không khớp");
+        }
         if (userRepository.existsByEmail(request.email())) {
             throw new BadRequestException("Email đã tồn tại");
         }
@@ -158,43 +165,48 @@ public class AuthService {
                 .verified(false)
                 .build();
         userRepository.save(user);
-        otpService.generateAndSend(user.getEmail());
+        otpService.sendOtp(user.getEmail());
         return "Đăng ký thành công. Vui lòng kiểm tra email để xác thực OTP.";
     }
 
     @Transactional
     public AuthDtos.AuthResponse verify(AuthDtos.VerifyRequest request) {
-        // Verify OTP
-        otpService.verify(request.email(), request.otp());
-        LOGGER.info("OTP verified for email: {}", request.email());
-        
-        // Check if this is a new registration (pending registration in DB)
-        var pendingOpt = pendingRegistrationRepository.findByEmail(request.email());
-        if (pendingOpt.isPresent()) {
-            var pending = pendingOpt.get();
-            LOGGER.info("Creating new user account for email: {}", request.email());
-            Faculty faculty = facultyRepository.findById(pending.getFacultyId())
-                .orElseThrow(() -> new ResourceNotFoundException("Khoa không tồn tại"));
-            User user = User.builder()
-                .studentCode(pending.getStudentCode())
-                .fullName(pending.getFullName())
-                .email(pending.getEmail())
-                .passwordHash(pending.getPasswordHash())
-                .faculty(faculty)
-                .role(Role.STUDENT)
-                .verified(true)  // Already verified via OTP
-                .build();
-            userRepository.save(user);
-            // remove pending
-            pendingRegistrationRepository.deleteByEmail(request.email());
-            return createAuthResponse(user);
-        } else {
-            // Existing user - just mark as verified (for password reset flow)
-            User user = userRepository.findByEmail(request.email())
-                    .orElseThrow(() -> new BadRequestException("OTP hoặc email không hợp lệ"));
-            user.setVerified(true);
-            userRepository.save(user);
-            return createAuthResponse(user);
+        try {
+            // Verify OTP (includes attempt checking and timing-safe comparison)
+            otpService.verifyOtp(request.email(), request.otp());
+            LOGGER.info("OTP verified for email: {}", request.email());
+            
+            // Check if this is a new registration (pending registration in DB)
+            var pendingOpt = pendingRegistrationRepository.findByEmail(request.email());
+            if (pendingOpt.isPresent()) {
+                var pending = pendingOpt.get();
+                LOGGER.info("Creating new user account for email: {}", request.email());
+                Faculty faculty = facultyRepository.findById(pending.getFacultyId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Khoa không tồn tại"));
+                User user = User.builder()
+                    .studentCode(pending.getStudentCode())
+                    .fullName(pending.getFullName())
+                    .email(pending.getEmail())
+                    .passwordHash(pending.getPasswordHash())
+                    .faculty(faculty)
+                    .role(Role.STUDENT)
+                    .verified(true)  // Already verified via OTP
+                    .build();
+                userRepository.save(user);
+                // remove pending
+                pendingRegistrationRepository.deleteByEmail(request.email());
+                return createAuthResponse(user);
+            } else {
+                // Existing user - just mark as verified (for password reset flow)
+                User user = userRepository.findByEmail(request.email())
+                        .orElseThrow(() -> new BadRequestException("OTP hoặc email không hợp lệ"));
+                user.setVerified(true);
+                userRepository.save(user);
+                return createAuthResponse(user);
+            }
+        } catch (BadRequestException e) {
+            // OTP verification failed (already logged by OtpService)
+            throw e;
         }
     }
 
@@ -262,8 +274,17 @@ public class AuthService {
     public String requestPasswordReset(String email) {
         userRepository.findByEmail(email)
                 .filter(User::isVerified)
-                .ifPresent(user -> otpService.generateAndSend(user.getEmail()));
+                .ifPresent(user -> otpService.sendOtp(user.getEmail()));
         return "Nếu email tồn tại trong hệ thống, mã OTP đã được gửi.";
+    }
+
+    public String verifyPasswordResetOtp(String email, String otp) {
+        otpService.verifyOtp(email, otp);
+        return otpService.createPasswordResetToken(email);
+    }
+
+    public String resolvePasswordResetEmail(String token) {
+        return otpService.resolvePasswordResetToken(token);
     }
 
     @Transactional
@@ -274,8 +295,23 @@ public class AuthService {
 
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BadRequestException("OTP hoặc email không hợp lệ"));
-        otpService.verify(request.email(), request.otp());
+        otpService.verifyOtp(request.email(), request.otp());
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+        return "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.";
+    }
+
+    @Transactional
+    public String resetPasswordWithToken(String token, String newPassword, String confirmPassword) {
+        if (!newPassword.equals(confirmPassword)) {
+            throw new BadRequestException("Mật khẩu xác nhận không khớp");
+        }
+
+        String email = otpService.consumePasswordResetToken(token);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException("OTP hoặc email không hợp lệ"));
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
         return "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.";
     }

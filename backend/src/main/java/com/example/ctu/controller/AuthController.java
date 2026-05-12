@@ -11,6 +11,9 @@ import com.example.ctu.service.AuthService;
 
 import jakarta.validation.Valid;
 
+/**
+ * REST Controller cho cac endpoint xac thuc.
+ */
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -21,11 +24,18 @@ public class AuthController {
         this.authService = authService;
     }
 
+    /**
+     * Dang ky nguoi dung moi.
+     */
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody AuthDtos.RegisterRequest request) {
-        return ResponseEntity.ok(authService.register(request));
+        String result = authService.register(request);
+        return ResponseEntity.ok(result);
     }
 
+    /**
+     * Xac thuc email bang OTP.
+     */
     @PostMapping("/verify")
     public ResponseEntity<AuthDtos.AuthResponse> verify(@Valid @RequestBody AuthDtos.VerifyRequest request) {
         return ResponseEntity.ok(authService.verify(request));
@@ -36,11 +46,18 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    /**
+     * Yeu cau dat lai mat khau.
+     */
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@Valid @RequestBody AuthDtos.ForgotPasswordRequest request) {
-        return ResponseEntity.ok(authService.requestPasswordReset(request.email()));
+        String result = authService.requestPasswordReset(request.email());
+        return ResponseEntity.ok(result);
     }
 
+    /**
+     * Dat lai mat khau bang OTP.
+     */
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(@Valid @RequestBody AuthDtos.ResetPasswordRequest request) {
         return ResponseEntity.ok(authService.resetPassword(request));

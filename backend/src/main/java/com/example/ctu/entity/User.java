@@ -39,7 +39,7 @@ public class User {
     @Column(name = "student_code", nullable = false, unique = true, length = 50)
     private String studentCode;
 
-    @Column(name = "full_name", nullable = false)
+    @Column(name = "full_name", nullable = false, columnDefinition="nvarchar(255)")
     private String fullName;
 
     @Column(nullable = false, unique = true)

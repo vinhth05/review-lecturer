@@ -15,7 +15,7 @@ public record AppProperties(
     public record Jwt(String secret, long expirationMinutes) {
     }
 
-    public record Otp(long ttlMinutes, long rateLimitSeconds) {
+    public record Otp(long ttlMinutes) {
     }
 
     public record Review(int rateLimitPerDay, String secretKey, List<String> toxicKeywords) {

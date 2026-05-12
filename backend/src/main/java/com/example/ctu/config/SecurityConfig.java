@@ -38,6 +38,8 @@ public class SecurityConfig {
                         "/forgot-password",
                         "/reset-password",
                         "/logout",
+                        "/api/auth/send-otp",
+                        "/api/auth/verify-otp",
                         "/css/**",
                         "/images/**",
                         "/favicon.ico",
