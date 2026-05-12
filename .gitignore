@@ -10,7 +10,8 @@ backend/target/
 backend/.mvn/
 backend/src/main/resources/db
 database/
-
+mvnw/
+mvnw.cmd
 
 # Frontend
 frontend/node_modules/
@@ -26,3 +27,6 @@ frontend/dist/
 
 run-all.bat
 run-all.ps1
+
+.mvn/wrapper/
+.github/java-upgrade
