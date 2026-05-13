@@ -68,17 +68,24 @@ public class AdminService {
     public Subject createSubject(AdminDtos.CreateSubjectRequest request) {
         Faculty faculty = facultyRepository.findById(request.facultyId())
                 .orElseThrow(() -> new ResourceNotFoundException("Khoa không tồn tại"));
+        if (subjectRepository.existsByCode(request.code())) {
+                throw new BadRequestException("Mã môn học đã tồn tại");
+        }
         return subjectRepository.save(Subject.builder().name(request.name()).code(request.code()).faculty(faculty).build());
     }
 
     @Transactional
     public Lecturer createLecturer(AdminDtos.CreateLecturerRequest request) {
+                if (lecturerRepository.existsByLecturerCode(request.lecturerCode())) {
+                                throw new BadRequestException("Mã giảng viên đã tồn tại");
+                }
         Faculty faculty = facultyRepository.findById(request.facultyId())
                 .orElseThrow(() -> new ResourceNotFoundException("Khoa không tồn tại"));
         Subject subject = null;
         if (request.subjectId() != null) {
             subject = subjectRepository.findById(request.subjectId())
                     .orElseThrow(() -> new ResourceNotFoundException("Môn học không tồn tại"));
+                        ensureSubjectBelongsToFaculty(subject, faculty);
         }
         return lecturerRepository.save(Lecturer.builder()
                 .lecturerCode(request.lecturerCode())
@@ -88,6 +95,143 @@ public class AdminService {
                 .status(LecturerStatus.ACTIVE)
                 .build());
     }
+
+        @Transactional(readOnly = true)
+        public AdminDtos.PageResponse<AdminDtos.FacultyItem> listFaculties(int page, int size) {
+                int safePage = Math.max(page, 0);
+                int safeSize = Math.min(Math.max(size, 1), 100);
+                Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.ASC, "name"));
+                Page<Faculty> facultyPage = facultyRepository.findAll(pageable);
+                List<AdminDtos.FacultyItem> content = facultyPage.getContent().stream()
+                                .map(faculty -> new AdminDtos.FacultyItem(faculty.getId(), faculty.getName(), faculty.getCode(), faculty.getCreatedAt()))
+                                .toList();
+                return new AdminDtos.PageResponse<>(content, facultyPage.getNumber(), facultyPage.getSize(), facultyPage.getTotalElements(), facultyPage.getTotalPages(), facultyPage.isFirst(), facultyPage.isLast());
+        }
+
+        @Transactional(readOnly = true)
+        public AdminDtos.PageResponse<AdminDtos.SubjectItem> listSubjects(int page, int size) {
+                int safePage = Math.max(page, 0);
+                int safeSize = Math.min(Math.max(size, 1), 100);
+                Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.ASC, "faculty.name").and(Sort.by(Sort.Direction.ASC, "name")));
+                Page<Subject> subjectPage = subjectRepository.findAll(pageable);
+                List<AdminDtos.SubjectItem> content = subjectPage.getContent().stream()
+                                .map(subject -> new AdminDtos.SubjectItem(
+                                                subject.getId(),
+                                                subject.getName(),
+                                                subject.getCode(),
+                                                subject.getFaculty().getId(),
+                                                subject.getFaculty().getName(),
+                                                subject.getCreatedAt()))
+                                .toList();
+                return new AdminDtos.PageResponse<>(content, subjectPage.getNumber(), subjectPage.getSize(), subjectPage.getTotalElements(), subjectPage.getTotalPages(), subjectPage.isFirst(), subjectPage.isLast());
+        }
+
+        @Transactional(readOnly = true)
+        public AdminDtos.PageResponse<AdminDtos.LecturerItem> listLecturers(int page, int size) {
+                int safePage = Math.max(page, 0);
+                int safeSize = Math.min(Math.max(size, 1), 100);
+                Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+                Page<Lecturer> lecturerPage = lecturerRepository.findAll(pageable);
+                List<AdminDtos.LecturerItem> content = lecturerPage.getContent().stream()
+                                .map(lecturer -> new AdminDtos.LecturerItem(
+                                                lecturer.getId(),
+                                                lecturer.getLecturerCode(),
+                                                lecturer.getFullName(),
+                                                lecturer.getFaculty().getId(),
+                                                lecturer.getFaculty().getName(),
+                                                lecturer.getSubject() == null ? null : lecturer.getSubject().getId(),
+                                                lecturer.getSubject() == null ? null : lecturer.getSubject().getName(),
+                                                lecturer.getStatus(),
+                                                lecturer.getCreatedAt()))
+                                .toList();
+                return new AdminDtos.PageResponse<>(content, lecturerPage.getNumber(), lecturerPage.getSize(), lecturerPage.getTotalElements(), lecturerPage.getTotalPages(), lecturerPage.isFirst(), lecturerPage.isLast());
+        }
+
+        @Transactional
+        public Faculty updateFaculty(Long facultyId, AdminDtos.UpdateFacultyRequest request) {
+                Faculty faculty = facultyRepository.findById(facultyId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Khoa không tồn tại"));
+                if (!faculty.getCode().equalsIgnoreCase(request.code()) && facultyRepository.findByCode(request.code()).isPresent()) {
+                        throw new BadRequestException("Mã khoa đã tồn tại");
+                }
+                faculty.setName(request.name());
+                faculty.setCode(request.code());
+                return facultyRepository.save(faculty);
+        }
+
+        @Transactional
+        public void deleteFaculty(Long facultyId) {
+                Faculty faculty = facultyRepository.findById(facultyId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Khoa không tồn tại"));
+                if (subjectRepository.countByFaculty_Id(facultyId) > 0) {
+                        throw new BadRequestException("Không thể xóa khoa đang có môn học");
+                }
+                if (lecturerRepository.countByFaculty_Id(facultyId) > 0) {
+                        throw new BadRequestException("Không thể xóa khoa đang có giảng viên");
+                }
+                if (userRepository.countByFaculty_Id(facultyId) > 0) {
+                        throw new BadRequestException("Không thể xóa khoa đang có người dùng");
+                }
+                facultyRepository.delete(faculty);
+        }
+
+        @Transactional
+        public Subject updateSubject(Long subjectId, AdminDtos.UpdateSubjectRequest request) {
+                Subject subject = subjectRepository.findById(subjectId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Môn học không tồn tại"));
+                Faculty faculty = facultyRepository.findById(request.facultyId())
+                                .orElseThrow(() -> new ResourceNotFoundException("Khoa không tồn tại"));
+                if (!subject.getCode().equalsIgnoreCase(request.code()) && subjectRepository.existsByCode(request.code())) {
+                        throw new BadRequestException("Mã môn học đã tồn tại");
+                }
+                subject.setName(request.name());
+                subject.setCode(request.code());
+                subject.setFaculty(faculty);
+                return subjectRepository.save(subject);
+        }
+
+        @Transactional
+        public void deleteSubject(Long subjectId) {
+                Subject subject = subjectRepository.findById(subjectId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Môn học không tồn tại"));
+                if (lecturerRepository.countBySubject_Id(subjectId) > 0) {
+                        throw new BadRequestException("Không thể xóa môn học đang gán cho giảng viên");
+                }
+                subjectRepository.delete(subject);
+        }
+
+        @Transactional
+        public Lecturer updateLecturer(Long lecturerId, AdminDtos.UpdateLecturerRequest request) {
+                Lecturer lecturer = lecturerRepository.findById(lecturerId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Giảng viên không tồn tại"));
+                Faculty faculty = facultyRepository.findById(request.facultyId())
+                                .orElseThrow(() -> new ResourceNotFoundException("Khoa không tồn tại"));
+                if (!lecturer.getLecturerCode().equalsIgnoreCase(request.lecturerCode()) && lecturerRepository.existsByLecturerCode(request.lecturerCode())) {
+                        throw new BadRequestException("Mã giảng viên đã tồn tại");
+                }
+                Subject subject = null;
+                if (request.subjectId() != null) {
+                        subject = subjectRepository.findById(request.subjectId())
+                                        .orElseThrow(() -> new ResourceNotFoundException("Môn học không tồn tại"));
+                        ensureSubjectBelongsToFaculty(subject, faculty);
+                }
+                lecturer.setLecturerCode(request.lecturerCode());
+                lecturer.setFullName(request.fullName());
+                lecturer.setFaculty(faculty);
+                lecturer.setSubject(subject);
+                lecturer.setStatus(request.status());
+                return lecturerRepository.save(lecturer);
+        }
+
+        @Transactional
+        public void deleteLecturer(Long lecturerId) {
+                Lecturer lecturer = lecturerRepository.findById(lecturerId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Giảng viên không tồn tại"));
+                if (reviewRepository.countByLecturer_Id(lecturerId) > 0) {
+                        throw new BadRequestException("Không thể xóa giảng viên đã có review");
+                }
+                lecturerRepository.delete(lecturer);
+        }
 
     @Transactional
         public Lecturer hideLecturer(Long lecturerId) {
@@ -243,19 +387,30 @@ public class AdminService {
 
         @Transactional
         public AdminDtos.UserItem setUserVerified(Long userId, boolean verified) {
-                User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
+                User user = findAdminUser(userId);
                 user.setVerified(verified);
-                User saved = userRepository.save(user);
-                return new AdminDtos.UserItem(
-                                saved.getId(),
-                                saved.getStudentCode(),
-                                saved.getFullName(),
-                                saved.getEmail(),
-                                saved.getFaculty().getName(),
-                                saved.getRole(),
-                                saved.isVerified(),
-                                saved.getCreatedAt()
-                );
+                return toUserItem(userRepository.save(user));
+        }
+
+        @Transactional
+        public AdminDtos.UserItem lockUser(Long userId, User actor) {
+                if (actor.getId().equals(userId)) {
+                        throw new BadRequestException("Không thể khóa chính bạn");
+                }
+                User target = findAdminUser(userId);
+                ensureSuperAdminSafety(target, true);
+                target.setLocked(true);
+                return toUserItem(userRepository.save(target));
+        }
+
+        @Transactional
+        public AdminDtos.UserItem unlockUser(Long userId, User actor) {
+                if (actor.getId().equals(userId)) {
+                        throw new BadRequestException("Không thể mở khóa chính bạn");
+                }
+                User target = findAdminUser(userId);
+                target.setLocked(false);
+                return toUserItem(userRepository.save(target));
         }
 
         @Transactional
@@ -286,6 +441,36 @@ public class AdminService {
                                         .append(u.getCreatedAt()).append('\n');
                 }
                 return sb.toString();
+        }
+
+        private User findAdminUser(Long userId) {
+                return userRepository.findById(userId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
+        }
+
+        private void ensureSuperAdminSafety(User target, boolean lockAction) {
+                if (target.getRole() == Role.SUPER_ADMIN && userRepository.countByRole(Role.SUPER_ADMIN) <= 1) {
+                        throw new BadRequestException(lockAction ? "Không thể khóa SUPER_ADMIN cuối cùng" : "Không thể mở khóa SUPER_ADMIN cuối cùng");
+                }
+        }
+
+                private void ensureSubjectBelongsToFaculty(Subject subject, Faculty faculty) {
+                        if (subject.getFaculty() == null || !subject.getFaculty().getId().equals(faculty.getId())) {
+                                throw new BadRequestException("Môn học không thuộc khoa đã chọn");
+                        }
+                }
+
+        private AdminDtos.UserItem toUserItem(User user) {
+                return new AdminDtos.UserItem(
+                                user.getId(),
+                                user.getStudentCode(),
+                                user.getFullName(),
+                                user.getEmail(),
+                                user.getFaculty().getName(),
+                                user.getRole(),
+                                user.isVerified(),
+                                user.getCreatedAt()
+                );
         }
 
         @Transactional(readOnly = true)
@@ -386,17 +571,6 @@ public class AdminService {
                 }
 
                 target.setRole(newRole);
-                User saved = userRepository.save(target);
-
-                return new AdminDtos.UserItem(
-                                saved.getId(),
-                                saved.getStudentCode(),
-                                saved.getFullName(),
-                                saved.getEmail(),
-                                saved.getFaculty().getName(),
-                                saved.getRole(),
-                                saved.isVerified(),
-                                saved.getCreatedAt()
-                );
+                return toUserItem(userRepository.save(target));
         }
 }

@@ -14,4 +14,5 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     boolean existsByEmail(String email);
     boolean existsByStudentCode(String studentCode);
     long countByRole(Role role);
+    long countByFaculty_Id(Long facultyId);
 }

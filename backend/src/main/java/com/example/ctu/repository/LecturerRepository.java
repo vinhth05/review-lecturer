@@ -15,6 +15,8 @@ public interface LecturerRepository extends JpaRepository<Lecturer, Long> {
     List<Lecturer> findByFaculty_CodeAndStatus(String facultyCode, LecturerStatus status);
     List<Lecturer> findBySubject_CodeAndStatus(String subjectCode, LecturerStatus status);
     List<Lecturer> findByStatus(LecturerStatus status);
+    long countByFaculty_Id(Long facultyId);
+    long countBySubject_Id(Long subjectId);
 
     Page<Lecturer> findByFaculty_CodeAndStatus(String facultyCode, LecturerStatus status, Pageable pageable);
     Page<Lecturer> findBySubject_CodeAndStatus(String subjectCode, LecturerStatus status, Pageable pageable);

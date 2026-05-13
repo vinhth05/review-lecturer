@@ -32,11 +32,15 @@ public class CustomUserDetailsService implements UserDetailsService {
                     LOGGER.warn("User not found for email: {}", username);
                     return new UsernameNotFoundException("User not found");
                 });
-        LOGGER.debug("User found: email={}, role={}, verified={}", user.getEmail(), user.getRole(), user.isVerified());
-        return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                user.getPasswordHash(),
-                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
-        );
+        LOGGER.debug("User found: email={}, role={}, verified={}, locked={}", user.getEmail(), user.getRole(), user.isVerified(), user.isLocked());
+        return org.springframework.security.core.userdetails.User
+            .withUsername(user.getEmail())
+            .password(user.getPasswordHash())
+            .authorities(List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())))
+            .accountLocked(user.isLocked())
+            .disabled(false)
+            .accountExpired(false)
+            .credentialsExpired(false)
+            .build();
     }
 }

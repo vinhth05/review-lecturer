@@ -214,6 +214,9 @@ public class AuthService {
         LOGGER.info("Login attempt for email: {}", request.email());
         User seedUser = authenticateSeedAccount(request.email(), request.password());
         if (seedUser != null) {
+            if (seedUser.isLocked()) {
+                throw new BadRequestException("Tài khoản đã bị khóa");
+            }
             LOGGER.info("Seed account login succeeded for: {}", request.email());
             return createAuthResponse(seedUser);
         }
@@ -230,6 +233,10 @@ public class AuthService {
 
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BadRequestException("Thông tin đăng nhập không hợp lệ"));
+        if (user.isLocked()) {
+            LOGGER.warn("User {} is locked", request.email());
+            throw new BadRequestException("Tài khoản đã bị khóa");
+        }
         if (!user.isVerified()) {
             LOGGER.warn("User {} not verified", request.email());
             throw new BadRequestException("Tài khoản chưa được xác thực OTP");

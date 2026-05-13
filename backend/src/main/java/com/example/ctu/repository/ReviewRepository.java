@@ -1,11 +1,12 @@
 package com.example.ctu.repository;
 
-import com.example.ctu.entity.Review;
+import java.time.Instant;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import java.time.Instant;
-import java.util.List;
+import com.example.ctu.entity.Review;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findByLecturer_IdAndApprovedOrderByCreatedAtDesc(Long lecturerId, boolean approved);
@@ -30,6 +31,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Double averageSupport(Long lecturerId);
 
     long countByLecturer_IdAndApproved(Long lecturerId, boolean approved);
+    long countByLecturer_Id(Long lecturerId);
     long countByApprovedTrue();
 
     @org.springframework.data.jpa.repository.Query(value = "SELECT COUNT(*) FROM reviews r WHERE CAST(r.created_at AS DATE) = CAST(GETDATE() AS DATE)", nativeQuery = true)

@@ -15,10 +15,44 @@ public final class AdminDtos {
     public record CreateFacultyRequest(String name, String code) {
     }
 
+    public record UpdateFacultyRequest(@NotBlank String name, @NotBlank String code) {
+    }
+
+    public record FacultyItem(Long id, String name, String code, Instant createdAt) {
+    }
+
     public record CreateSubjectRequest(String name, String code, Long facultyId) {
     }
 
+    public record UpdateSubjectRequest(@NotBlank String name, @NotBlank String code, @NotNull Long facultyId) {
+    }
+
+    public record SubjectItem(Long id, String name, String code, Long facultyId, String facultyName, Instant createdAt) {
+    }
+
     public record CreateLecturerRequest(String lecturerCode, String fullName, Long facultyId, Long subjectId) {
+    }
+
+    public record UpdateLecturerRequest(
+            @NotBlank String lecturerCode,
+            @NotBlank String fullName,
+            @NotNull Long facultyId,
+            Long subjectId,
+            @NotNull com.example.ctu.entity.enums.LecturerStatus status
+    ) {
+    }
+
+    public record LecturerItem(
+            Long id,
+            String lecturerCode,
+            String fullName,
+            Long facultyId,
+            String facultyName,
+            Long subjectId,
+            String subjectName,
+            com.example.ctu.entity.enums.LecturerStatus status,
+            Instant createdAt
+    ) {
     }
 
     public record ImportCtuLecturersRequest(

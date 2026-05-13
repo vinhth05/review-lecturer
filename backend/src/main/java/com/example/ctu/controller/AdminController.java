@@ -108,16 +108,79 @@ public class AdminController {
         return ResponseEntity.ok(adminService.createFaculty(request));
     }
 
+    @GetMapping("/faculties")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public AdminDtos.PageResponse<AdminDtos.FacultyItem> faculties(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return adminService.listFaculties(page, size);
+    }
+
+    @PatchMapping("/faculties/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Faculty> updateFaculty(@PathVariable Long id, @Valid @RequestBody AdminDtos.UpdateFacultyRequest request) {
+        return ResponseEntity.ok(adminService.updateFaculty(id, request));
+    }
+
+    @DeleteMapping("/faculties/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Void> deleteFaculty(@PathVariable Long id) {
+        adminService.deleteFaculty(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/subjects")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Subject> createSubject(@Valid @RequestBody AdminDtos.CreateSubjectRequest request) {
         return ResponseEntity.ok(adminService.createSubject(request));
     }
 
+    @GetMapping("/subjects")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public AdminDtos.PageResponse<AdminDtos.SubjectItem> subjects(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return adminService.listSubjects(page, size);
+    }
+
+    @PatchMapping("/subjects/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Subject> updateSubject(@PathVariable Long id, @Valid @RequestBody AdminDtos.UpdateSubjectRequest request) {
+        return ResponseEntity.ok(adminService.updateSubject(id, request));
+    }
+
+    @DeleteMapping("/subjects/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Void> deleteSubject(@PathVariable Long id) {
+        adminService.deleteSubject(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/lecturers")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Lecturer> createLecturer(@Valid @RequestBody AdminDtos.CreateLecturerRequest request) {
         return ResponseEntity.ok(adminService.createLecturer(request));
+    }
+
+    @GetMapping("/lecturers")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public AdminDtos.PageResponse<AdminDtos.LecturerItem> lecturers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return adminService.listLecturers(page, size);
+    }
+
+    @PatchMapping("/lecturers/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Lecturer> updateLecturer(@PathVariable Long id, @Valid @RequestBody AdminDtos.UpdateLecturerRequest request) {
+        return ResponseEntity.ok(adminService.updateLecturer(id, request));
+    }
+
+    @DeleteMapping("/lecturers/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Void> deleteLecturer(@PathVariable Long id) {
+        adminService.deleteLecturer(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/lecturers/import/ctu")
@@ -178,6 +241,26 @@ public class AdminController {
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<AdminDtos.UserItem> setUserVerified(@PathVariable Long id) {
         return ResponseEntity.ok(adminService.setUserVerified(id, true));
+    }
+
+    @PatchMapping("/users/{id}/lock")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<AdminDtos.UserItem> lockUser(@PathVariable Long id) {
+        User actor = currentUserService.requireCurrentUser();
+        return ResponseEntity.ok(adminService.lockUser(id, actor));
+    }
+
+    @PatchMapping("/users/{id}/unlock")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<AdminDtos.UserItem> unlockUser(@PathVariable Long id) {
+        User actor = currentUserService.requireCurrentUser();
+        return ResponseEntity.ok(adminService.unlockUser(id, actor));
+    }
+
+    @PatchMapping("/users/{id}/unverify")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<AdminDtos.UserItem> unsetUserVerified(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.setUserVerified(id, false));
     }
 
     @DeleteMapping("/users/{id}")
