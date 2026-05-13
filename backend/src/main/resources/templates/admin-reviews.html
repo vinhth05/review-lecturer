@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Reviews</title>
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page-shell">
+  <header class="topbar">
+    <div class="topbar-content">
+      <div class="brand">
+        <div class="brand-title">Admin Reviews</div>
+        <div class="brand-sub">Kiểm duyệt review và xử lý nội dung</div>
+      </div>
+      <nav class="nav">
+        <a href="/admin-panel">Dashboard</a>
+        <a href="/admin-panel/reviews">Reviews</a>
+        <a href="/admin-panel/users">Users</a>
+        <a href="/admin-panel/keywords">Keywords</a>
+        <a class="nav-primary" href="/logout">Đăng xuất</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="main-content admin-page">
+    <section class="hero">
+      <div class="eyebrow">Moderation</div>
+      <h1>Danh sách review</h1>
+      <p>Review chưa duyệt có thể approve trực tiếp từ bảng.</p>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Review gần nhất</h2>
+          <p class="section-sub">Sắp xếp theo thời gian tạo mới nhất.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table" id="reviewsTable">
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>Giảng viên</th>
+            <th>Nội dung</th>
+            <th>Học kỳ</th>
+            <th>Report</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+          </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+</main>
+
+<script>
+async function loadReviews() {
+  const response = await fetch('/admin/reviews?page=0&size=50');
+  if (!response.ok) {
+    alert('Khong the tai review');
+    return;
+  }
+  const data = await response.json();
+  const rows = data.content || [];
+  const body = document.querySelector('#reviewsTable tbody');
+  body.innerHTML = rows.map(row => `
+    <tr>
+      <td>${row.id}</td>
+      <td>${row.lecturerName}</td>
+      <td>${row.comment || ''}</td>
+      <td>${row.semester || ''} - ${row.academicYear || ''}</td>
+      <td>${row.reportCount || 0}</td>
+      <td>${row.approved ? 'Approved' : 'Pending'}</td>
+      <td>
+        ${row.approved ? '' : `<button class="button secondary" onclick="approveReview(${row.id})">Approve</button>`}
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function approveReview(id) {
+  const response = await fetch(`/admin/reviews/${id}/approve`, { method: 'PATCH' });
+  if (!response.ok) {
+    alert('Approve that bai');
+    return;
+  }
+  loadReviews();
+}
+
+loadReviews();
+</script>
+</body>
+</html>

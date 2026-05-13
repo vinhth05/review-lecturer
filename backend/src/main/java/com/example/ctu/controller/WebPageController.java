@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -225,6 +226,46 @@ public class WebPageController {
         return "profile";
     }
 
+    @GetMapping("/admin-panel")
+    public String adminDashboardPage(Model model, Authentication authentication) {
+        if (!hasAdminRole(authentication)) {
+            return "redirect:/login";
+        }
+        addCommonModel(model, authentication);
+        model.addAttribute("isSuperAdmin", hasSuperAdminRole(authentication));
+        return "admin-dashboard";
+    }
+
+    @GetMapping("/admin-panel/reviews")
+    public String adminReviewsPage(Model model, Authentication authentication) {
+        if (!hasAdminRole(authentication)) {
+            return "redirect:/login";
+        }
+        addCommonModel(model, authentication);
+        model.addAttribute("isSuperAdmin", hasSuperAdminRole(authentication));
+        return "admin-reviews";
+    }
+
+    @GetMapping("/admin-panel/users")
+    public String adminUsersPage(Model model, Authentication authentication) {
+        if (!hasAdminRole(authentication)) {
+            return "redirect:/login";
+        }
+        addCommonModel(model, authentication);
+        model.addAttribute("isSuperAdmin", hasSuperAdminRole(authentication));
+        return "admin-users";
+    }
+
+    @GetMapping("/admin-panel/keywords")
+    public String adminKeywordsPage(Model model, Authentication authentication) {
+        if (!hasAdminRole(authentication)) {
+            return "redirect:/login";
+        }
+        addCommonModel(model, authentication);
+        model.addAttribute("isSuperAdmin", hasSuperAdminRole(authentication));
+        return "admin-keywords";
+    }
+
     @PostMapping("/profile/update")
     public String profileUpdateSubmit(@RequestParam String fullName,
                                       @RequestParam Long facultyId,
@@ -291,5 +332,23 @@ public class WebPageController {
 
     private boolean isAnonymous(Authentication authentication) {
         return authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken;
+    }
+
+    private boolean hasAdminRole(Authentication authentication) {
+        if (isAnonymous(authentication)) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role -> role.equals("ROLE_ADMIN") || role.equals("ROLE_SUPER_ADMIN"));
+    }
+
+    private boolean hasSuperAdminRole(Authentication authentication) {
+        if (isAnonymous(authentication)) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role -> role.equals("ROLE_SUPER_ADMIN"));
     }
 }

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Users</title>
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page-shell">
+  <header class="topbar">
+    <div class="topbar-content">
+      <div class="brand">
+        <div class="brand-title">Admin Users</div>
+        <div class="brand-sub">Quản lý tài khoản và phân quyền</div>
+      </div>
+      <nav class="nav">
+        <a href="/admin-panel">Dashboard</a>
+        <a href="/admin-panel/reviews">Reviews</a>
+        <a href="/admin-panel/users">Users</a>
+        <a href="/admin-panel/keywords">Keywords</a>
+        <a class="nav-primary" href="/logout">Đăng xuất</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="main-content admin-page">
+    <section class="hero">
+      <div class="eyebrow">User Management</div>
+      <h1>Danh sách tài khoản</h1>
+      <p>SUPER_ADMIN có thể đổi role trực tiếp.</p>
+    </section>
+
+    <section class="section">
+      <div style="margin-bottom:12px">
+        <button id="exportUsersBtn" onclick="exportUsers()">Export Users CSV</button>
+        <button id="exportReviewsBtn" onclick="exportReviews()">Export Reviews CSV</button>
+        <button id="bulkVerifyBtn" onclick="bulkVerifySelected()" ${isSuperAdmin ? '' : 'disabled'}>Bulk Verify Selected</button>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table" id="usersTable">
+          <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
+            <th>MSSV</th>
+            <th>Họ tên</th>
+            <th>Email</th>
+            <th>Khoa</th>
+            <th>Role</th>
+            <th>Verified</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+</main>
+
+<script th:inline="javascript">
+const isSuperAdmin = /*[[${isSuperAdmin}]]*/ false;
+
+async function loadUsers() {
+  const response = await fetch('/admin/users?page=0&size=50');
+  if (!response.ok) {
+    alert('Khong the tai danh sach user');
+    return;
+  }
+  const data = await response.json();
+  const body = document.querySelector('#usersTable tbody');
+  body.innerHTML = (data.content || []).map(user => {
+    const roleSelect = `
+      <select onchange="updateRole(${user.id}, this.value)" ${isSuperAdmin ? '' : 'disabled'}>
+        ${['STUDENT', 'ADMIN', 'SUPER_ADMIN'].map(role => `<option value="${role}" ${role === user.role ? 'selected' : ''}>${role}</option>`).join('')}
+      </select>
+    `;
+
+    const verifyBtn = user.verified ? '' : `<button onclick="verifyUser(${user.id})" ${isSuperAdmin ? '' : 'disabled'}>Verify</button>`;
+    const deleteBtn = `<button onclick="deleteUser(${user.id})" ${isSuperAdmin ? '' : 'disabled'}>Delete</button>`;
+
+    return `
+      <tr>
+        <td><input type="checkbox" class="selectUser" data-id="${user.id}"></td>
+        <td>${user.studentCode}</td>
+        <td>${user.fullName}</td>
+        <td>${user.email}</td>
+        <td>${user.facultyName}</td>
+        <td>${user.role}</td>
+        <td>${user.verified ? 'Yes' : 'No'}</td>
+        <td>${roleSelect} ${verifyBtn} ${deleteBtn}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function updateRole(userId, role) {
+  if (!isSuperAdmin) {
+    alert('Ban khong co quyen doi role');
+    return;
+  }
+  const response = await fetch(`/admin/users/${userId}/role`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role })
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Khong doi duoc role' }));
+    alert(error.message || 'Khong doi duoc role');
+    loadUsers();
+    return;
+  }
+
+  loadUsers();
+}
+
+loadUsers();
+
+function toggleSelectAll(cb) {
+  document.querySelectorAll('.selectUser').forEach(ch => ch.checked = cb.checked);
+}
+
+function getSelectedIds() {
+  return Array.from(document.querySelectorAll('.selectUser:checked')).map(x => Number(x.dataset.id));
+}
+
+async function verifyUser(userId) {
+  if (!confirm('Xác nhận verify user #' + userId + '?')) return;
+  const res = await fetch(`/admin/users/${userId}/verified`, { method: 'PATCH' });
+  if (!res.ok) { alert('Verify thất bại'); return; }
+  loadUsers();
+}
+
+async function deleteUser(userId) {
+  if (!confirm('Xác nhận xóa user #' + userId + '?')) return;
+  const res = await fetch(`/admin/users/${userId}`, { method: 'DELETE' });
+  if (res.status === 204) { loadUsers(); return; }
+  const err = await res.json().catch(() => ({ message: 'Xóa thất bại' }));
+  alert(err.message || 'Xóa thất bại');
+}
+
+async function bulkVerifySelected() {
+  const ids = getSelectedIds();
+  if (!ids.length) { alert('Chưa chọn user nào'); return; }
+  if (!confirm('Xác nhận verify ' + ids.length + ' users?')) return;
+  for (const id of ids) {
+    await fetch(`/admin/users/${id}/verified`, { method: 'PATCH' });
+  }
+  loadUsers();
+}
+
+function downloadCsv(text, filename) {
+  const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function exportUsers() {
+  const res = await fetch('/admin/export/users');
+  if (!res.ok) { alert('Export thất bại'); return; }
+  const txt = await res.text();
+  downloadCsv(txt, 'users.csv');
+}
+
+async function exportReviews() {
+  const res = await fetch('/admin/export/reviews');
+  if (!res.ok) { alert('Export thất bại'); return; }
+  const txt = await res.text();
+  downloadCsv(txt, 'reviews.csv');
+}
+</script>
+</body>
+</html>

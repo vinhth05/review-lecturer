@@ -22,10 +22,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({BadRequestException.class, MethodArgumentNotValidException.class})
     public ResponseEntity<ApiError> handleBadRequest(Exception exception) {
         String message = exception instanceof MethodArgumentNotValidException validationException
-                ? validationException.getBindingResult().getFieldErrors().stream()
-                .map(fieldError -> fieldError.getField() + " " + fieldError.getDefaultMessage())
-                .collect(Collectors.joining(", "))
-                : exception.getMessage() != null ? exception.getMessage() : "Yêu cầu không hợp lệ";
+            ? validationException.getBindingResult().getFieldErrors().stream()
+            .map(fieldError -> fieldError.getField() + " " + fieldError.getDefaultMessage())
+            .collect(Collectors.joining(", "))
+            : java.util.Optional.ofNullable(exception).map(Throwable::getMessage).orElse("Yêu cầu không hợp lệ");
         return ResponseEntity.badRequest().body(new ApiError(message, Instant.now()));
     }
 

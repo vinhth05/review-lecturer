@@ -1604,6 +1604,45 @@ main {
 flex: 1;
 }
 
+/* Admin pages */
+.admin-page {
+	padding: 24px;
+	gap: 24px;
+}
+
+.table-wrap {
+	overflow-x: auto;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-sm);
+}
+
+.admin-table {
+	width: 100%;
+	border-collapse: collapse;
+	min-width: 860px;
+}
+
+.admin-table th,
+.admin-table td {
+	padding: 12px 14px;
+	border-bottom: 1px solid var(--border-light);
+	text-align: left;
+	vertical-align: top;
+	font-size: 14px;
+}
+
+.admin-table th {
+	font-weight: 700;
+	background: #f8fbff;
+	color: var(--ink);
+}
+
+.admin-table tr:hover td {
+	background: #fbfdff;
+}
+
 /* Footer - rules styling */
 .footer-rules {
 	list-style: none;

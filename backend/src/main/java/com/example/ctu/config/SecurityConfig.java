@@ -53,6 +53,7 @@ public class SecurityConfig {
                                 "/ws/**"
                         ).permitAll()
                     .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                    .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
                     .requestMatchers("/reviews", "/reports").hasRole("STUDENT")
                     .requestMatchers("/students/**").hasAnyRole("STUDENT", "ADMIN", "SUPER_ADMIN")
                         .anyRequest().authenticated()

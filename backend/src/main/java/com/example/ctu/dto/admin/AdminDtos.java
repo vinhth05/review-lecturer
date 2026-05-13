@@ -3,7 +3,10 @@ package com.example.ctu.dto.admin;
 import java.time.Instant;
 import java.util.List;
 
+import com.example.ctu.entity.enums.Role;
+
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public final class AdminDtos {
     private AdminDtos() {
@@ -38,6 +41,21 @@ public final class AdminDtos {
 
         public record ToxicKeywordItem(Long id, String keyword, Instant createdAt) {
         }
+
+            public record UserItem(
+                    Long id,
+                    String studentCode,
+                    String fullName,
+                    String email,
+                    String facultyName,
+                    Role role,
+                    boolean verified,
+                    Instant createdAt
+            ) {
+            }
+
+            public record UpdateUserRoleRequest(@NotNull Role role) {
+            }
 
     public record PendingReviewItem(
                         Long id,

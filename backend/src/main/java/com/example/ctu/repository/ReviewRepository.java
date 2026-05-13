@@ -30,4 +30,11 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Double averageSupport(Long lecturerId);
 
     long countByLecturer_IdAndApproved(Long lecturerId, boolean approved);
+    long countByApprovedTrue();
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT COUNT(*) FROM reviews r WHERE CAST(r.created_at AS DATE) = CAST(GETDATE() AS DATE)", nativeQuery = true)
+    long countReviewsToday();
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT COUNT(*) FROM reviews r WHERE MONTH(r.created_at) = MONTH(GETDATE()) AND YEAR(r.created_at) = YEAR(GETDATE())", nativeQuery = true)
+    long countReviewsThisMonth();
 }

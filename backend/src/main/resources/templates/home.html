@@ -17,6 +17,7 @@
       <nav class="nav">
         <a href="/">Trang chủ</a>
         <a href="/lecturers">Giảng viên</a>
+        <a th:if="${currentRole == 'ROLE_ADMIN' || currentRole == 'ROLE_SUPER_ADMIN'}" href="/admin-panel">Quản trị</a>
         <a th:if="${currentUser != null}" href="/profile">Hồ sơ</a>
         <a th:if="${currentUser == null}" href="/login">Đăng nhập</a>
         <a th:if="${currentUser == null}" class="nav-primary" href="/register">Đăng ký</a>

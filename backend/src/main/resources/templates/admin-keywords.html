@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Toxic Keywords</title>
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page-shell">
+  <header class="topbar">
+    <div class="topbar-content">
+      <div class="brand">
+        <div class="brand-title">Admin Keywords</div>
+        <div class="brand-sub">Danh sách từ khóa độc hại</div>
+      </div>
+      <nav class="nav">
+        <a href="/admin-panel">Dashboard</a>
+        <a href="/admin-panel/reviews">Reviews</a>
+        <a href="/admin-panel/users">Users</a>
+        <a href="/admin-panel/keywords">Keywords</a>
+        <a class="nav-primary" href="/logout">Đăng xuất</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="main-content admin-page">
+    <section class="hero">
+      <div class="eyebrow">Content Safety</div>
+      <h1>Quản lý toxic keywords</h1>
+      <p>Chỉ SUPER_ADMIN có quyền thêm và xóa từ khóa.</p>
+    </section>
+
+    <section class="section">
+      <form class="form" id="keywordForm" th:if="${isSuperAdmin}">
+        <div class="field">
+          <label>Từ khóa</label>
+          <input type="text" id="keywordInput" placeholder="Nhập từ khóa mới" required>
+        </div>
+        <button class="button primary" type="submit">Thêm</button>
+      </form>
+      <p class="meta" th:if="${!isSuperAdmin}">Bạn chỉ có quyền xem danh sách.</p>
+    </section>
+
+    <section class="section">
+      <div class="table-wrap">
+        <table class="admin-table" id="keywordsTable">
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>Từ khóa</th>
+            <th>Ngày tạo</th>
+            <th>Xóa</th>
+          </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+</main>
+
+<script th:inline="javascript">
+const isSuperAdmin = /*[[${isSuperAdmin}]]*/ false;
+
+async function loadKeywords() {
+  const response = await fetch('/admin/toxic-keywords');
+  if (!response.ok) {
+    alert('Khong the tai tu khoa');
+    return;
+  }
+  const data = await response.json();
+  const body = document.querySelector('#keywordsTable tbody');
+  body.innerHTML = (data || []).map(item => `
+    <tr>
+      <td>${item.id}</td>
+      <td>${item.keyword}</td>
+      <td>${item.createdAt || ''}</td>
+      <td>${isSuperAdmin ? `<button class="button secondary" onclick="deleteKeyword(${item.id})">Xoa</button>` : ''}</td>
+    </tr>
+  `).join('');
+}
+
+async function deleteKeyword(id) {
+  if (!isSuperAdmin) {
+    return;
+  }
+  const response = await fetch(`/admin/toxic-keywords/${id}`, { method: 'DELETE' });
+  if (!response.ok) {
+    alert('Xoa that bai');
+    return;
+  }
+  loadKeywords();
+}
+
+document.getElementById('keywordForm')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const keyword = document.getElementById('keywordInput').value.trim();
+  if (!keyword) {
+    return;
+  }
+
+  const response = await fetch('/admin/toxic-keywords', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keyword })
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Them that bai' }));
+    alert(error.message || 'Them that bai');
+    return;
+  }
+
+  document.getElementById('keywordInput').value = '';
+  loadKeywords();
+});
+
+loadKeywords();
+</script>
+</body>
+</html>

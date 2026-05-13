@@ -59,6 +59,9 @@ public class User {
     @Column(name = "is_verified", nullable = false)
     private boolean verified;
 
+    @Column(name = "is_locked", nullable = false)
+    private boolean locked;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @JdbcTypeCode(SqlTypes.TIMESTAMP)
     private Instant createdAt;

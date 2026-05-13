@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,8 +18,11 @@ import com.example.ctu.entity.Faculty;
 import com.example.ctu.entity.Lecturer;
 import com.example.ctu.entity.Report;
 import com.example.ctu.entity.Subject;
+import com.example.ctu.entity.User;
 import com.example.ctu.entity.enums.LecturerStatus;
+import com.example.ctu.entity.enums.Role;
 import com.example.ctu.exception.BadRequestException;
+import com.example.ctu.exception.ForbiddenException;
 import com.example.ctu.exception.ResourceNotFoundException;
 import com.example.ctu.repository.FacultyRepository;
 import com.example.ctu.repository.LecturerRepository;
@@ -210,4 +214,189 @@ public class AdminService {
                 (review.getRatingClarity() + review.getRatingFairness() + review.getRatingPressure() + review.getRatingWorkload() + review.getRatingSupport()) / 5.0
         ).average().orElse(0);
     }
+
+        @Transactional
+        public void deleteReview(Long reviewId) {
+                if (!reviewRepository.existsById(reviewId)) {
+                        throw new ResourceNotFoundException("Review không tồn tại");
+                }
+                reportRepository.findAll().stream()
+                                .filter(report -> report.getReview().getId().equals(reviewId))
+                                .forEach(report -> reportRepository.delete(report));
+                reviewRepository.deleteById(reviewId);
+        }
+
+        @Transactional
+        public Lecturer unhideLecturer(Long lecturerId) {
+                Lecturer lecturer = lecturerRepository.findById(lecturerId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Giảng viên không tồn tại"));
+                lecturer.setStatus(LecturerStatus.ACTIVE);
+                return lecturerRepository.save(lecturer);
+        }
+
+        @Transactional
+        public void bulkApproveReviews(List<Long> reviewIds) {
+                List<com.example.ctu.entity.Review> reviews = reviewRepository.findAllById(reviewIds);
+                reviews.forEach(r -> r.setApproved(true));
+                reviewRepository.saveAll(reviews);
+        }
+
+        @Transactional
+        public AdminDtos.UserItem setUserVerified(Long userId, boolean verified) {
+                User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
+                user.setVerified(verified);
+                User saved = userRepository.save(user);
+                return new AdminDtos.UserItem(
+                                saved.getId(),
+                                saved.getStudentCode(),
+                                saved.getFullName(),
+                                saved.getEmail(),
+                                saved.getFaculty().getName(),
+                                saved.getRole(),
+                                saved.isVerified(),
+                                saved.getCreatedAt()
+                );
+        }
+
+        @Transactional
+        public void deleteUser(Long userId, User actor) {
+                User target = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
+                if (target.getRole() == Role.SUPER_ADMIN && userRepository.countByRole(Role.SUPER_ADMIN) <= 1) {
+                        throw new BadRequestException("Không thể xóa SUPER_ADMIN cuối cùng");
+                }
+                if (actor.getId().equals(userId)) {
+                        throw new BadRequestException("Không thể xóa chính bạn");
+                }
+                userRepository.deleteById(userId);
+        }
+
+        @Transactional(readOnly = true)
+        public String exportUsersCsv() {
+                List<User> users = userRepository.findAll();
+                StringBuilder sb = new StringBuilder();
+                sb.append("id,studentCode,fullName,email,faculty,role,verified,createdAt\n");
+                for (User u : users) {
+                        sb.append(u.getId()).append(',')
+                                        .append(escapeCsv(u.getStudentCode())).append(',')
+                                        .append(escapeCsv(u.getFullName())).append(',')
+                                        .append(escapeCsv(u.getEmail())).append(',')
+                                        .append(escapeCsv(u.getFaculty().getName())).append(',')
+                                        .append(u.getRole()).append(',')
+                                        .append(u.isVerified()).append(',')
+                                        .append(u.getCreatedAt()).append('\n');
+                }
+                return sb.toString();
+        }
+
+        @Transactional(readOnly = true)
+        public String exportReviewsCsv(Boolean approved) {
+                List<com.example.ctu.entity.Review> reviews = reviewRepository.findAll();
+                if (approved != null) {
+                        reviews = reviews.stream().filter(r -> r.isApproved() == approved).toList();
+                }
+                StringBuilder sb = new StringBuilder();
+                sb.append("id,lecturerId,lecturerName,faculty,comment,semester,academicYear,approved,createdAt\n");
+                for (com.example.ctu.entity.Review r : reviews) {
+                        sb.append(r.getId()).append(',')
+                                        .append(r.getLecturer().getId()).append(',')
+                                        .append(escapeCsv(r.getLecturer().getFullName())).append(',')
+                                        .append(escapeCsv(r.getLecturer().getFaculty().getName())).append(',')
+                                        .append(escapeCsv(r.getComment())).append(',')
+                                        .append(escapeCsv(r.getSemester())).append(',')
+                                        .append(escapeCsv(r.getAcademicYear())).append(',')
+                                        .append(r.isApproved()).append(',')
+                                        .append(r.getCreatedAt()).append('\n');
+                }
+                return sb.toString();
+        }
+
+        private String escapeCsv(String value) {
+                if (value == null) return "";
+                String v = value.replace("\"", "\"\"");
+                if (v.contains(",") || v.contains("\n") || v.contains("\r") || v.contains("\"")) {
+                        return '"' + v + '"';
+                }
+                return v;
+        }
+
+        @Transactional(readOnly = true)
+        public AdminDtos.PageResponse<AdminDtos.UserItem> listUsers(int page, int size, String keyword, Role role, Boolean verified) {
+                int safePage = Math.max(page, 0);
+                int safeSize = Math.min(Math.max(size, 1), 100);
+                Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+                Specification<User> specification = Specification.where(null);
+
+                if (keyword != null && !keyword.isBlank()) {
+                        String pattern = "%" + keyword.trim().toLowerCase() + "%";
+                        specification = specification.and((root, query, cb) -> cb.or(
+                                        cb.like(cb.lower(root.get("fullName")), pattern),
+                                        cb.like(cb.lower(root.get("email")), pattern),
+                                        cb.like(cb.lower(root.get("studentCode")), pattern)
+                        ));
+                }
+                if (role != null) {
+                        specification = specification.and((root, query, cb) -> cb.equal(root.get("role"), role));
+                }
+                if (verified != null) {
+                        specification = specification.and((root, query, cb) -> cb.equal(root.get("verified"), verified));
+                }
+
+                Page<User> userPage = userRepository.findAll(specification, pageable);
+                List<AdminDtos.UserItem> content = userPage.getContent().stream()
+                                .map(user -> new AdminDtos.UserItem(
+                                                user.getId(),
+                                                user.getStudentCode(),
+                                                user.getFullName(),
+                                                user.getEmail(),
+                                                user.getFaculty().getName(),
+                                                user.getRole(),
+                                                user.isVerified(),
+                                                user.getCreatedAt()
+                                ))
+                                .toList();
+
+                return new AdminDtos.PageResponse<>(
+                                content,
+                                userPage.getNumber(),
+                                userPage.getSize(),
+                                userPage.getTotalElements(),
+                                userPage.getTotalPages(),
+                                userPage.isFirst(),
+                                userPage.isLast()
+                );
+        }
+
+        @Transactional
+        public AdminDtos.UserItem updateUserRole(Long userId, AdminDtos.UpdateUserRoleRequest request, User actor) {
+                if (actor.getRole() != Role.SUPER_ADMIN) {
+                        throw new ForbiddenException("Chỉ SUPER_ADMIN mới được đổi vai trò tài khoản");
+                }
+                if (actor.getId().equals(userId)) {
+                        throw new BadRequestException("Không thể tự thay đổi vai trò của chính bạn");
+                }
+
+                User target = userRepository.findById(userId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
+
+                Role newRole = request.role();
+                if (target.getRole() == Role.SUPER_ADMIN && newRole != Role.SUPER_ADMIN
+                                && userRepository.countByRole(Role.SUPER_ADMIN) <= 1) {
+                        throw new BadRequestException("Không thể hạ quyền SUPER_ADMIN cuối cùng");
+                }
+
+                target.setRole(newRole);
+                User saved = userRepository.save(target);
+
+                return new AdminDtos.UserItem(
+                                saved.getId(),
+                                saved.getStudentCode(),
+                                saved.getFullName(),
+                                saved.getEmail(),
+                                saved.getFaculty().getName(),
+                                saved.getRole(),
+                                saved.isVerified(),
+                                saved.getCreatedAt()
+                );
+        }
 }
