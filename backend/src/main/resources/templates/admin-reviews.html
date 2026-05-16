@@ -16,7 +16,11 @@
       </div>
       <nav class="nav">
         <a href="/admin-panel">Dashboard</a>
+        <a href="/admin-panel/faculties">Faculties</a>
+        <a href="/admin-panel/subjects">Subjects</a>
+        <a href="/admin-panel/lecturers">Lecturers</a>
         <a href="/admin-panel/reviews">Reviews</a>
+        <a href="/admin-panel/reports">Reports</a>
         <a href="/admin-panel/users">Users</a>
         <a href="/admin-panel/keywords">Keywords</a>
         <a class="nav-primary" href="/logout">Đăng xuất</a>
@@ -37,11 +41,16 @@
           <h2 class="section-title">Review gần nhất</h2>
           <p class="section-sub">Sắp xếp theo thời gian tạo mới nhất.</p>
         </div>
+        <div>
+          <button class="button secondary" onclick="bulkApprove()">Duyệt chọn</button>
+          <button class="button secondary" onclick="bulkDeleteReviews()" th:if="${isSuperAdmin}">Xóa chọn</button>
+        </div>
       </div>
       <div class="table-wrap">
         <table class="admin-table" id="reviewsTable">
           <thead>
           <tr>
+            <th><input type="checkbox" id="selectAllReviews" onchange="toggleSelectAll(this)"></th>
             <th>ID</th>
             <th>Giảng viên</th>
             <th>Nội dung</th>
@@ -58,7 +67,10 @@
   </section>
 </main>
 
-<script>
+<script th:inline="javascript">
+const isAdminRole = /*[[${isAdminRole}]]*/ false;
+const isSuperAdmin = /*[[${isSuperAdmin}]]*/ false;
+
 async function loadReviews() {
   const response = await fetch('/admin/reviews?page=0&size=50');
   if (!response.ok) {
@@ -70,6 +82,7 @@ async function loadReviews() {
   const body = document.querySelector('#reviewsTable tbody');
   body.innerHTML = rows.map(row => `
     <tr>
+      <td><input type="checkbox" class="selectReview" data-id="${row.id}"></td>
       <td>${row.id}</td>
       <td>${row.lecturerName}</td>
       <td>${row.comment || ''}</td>
@@ -77,10 +90,20 @@ async function loadReviews() {
       <td>${row.reportCount || 0}</td>
       <td>${row.approved ? 'Approved' : 'Pending'}</td>
       <td>
-        ${row.approved ? '' : `<button class="button secondary" onclick="approveReview(${row.id})">Approve</button>`}
+        ${row.approved ? '' : `<button class="button secondary" onclick="approveReview(${row.id})" ${isAdminRole ? '' : 'disabled'}>Approve</button>`}
+        ${row.approved ? '' : `<button class="button secondary" onclick="rejectReview(${row.id})" ${isAdminRole ? '' : 'disabled'}>Reject</button>`}
+        <button class="button secondary" onclick="deleteReview(${row.id})" ${isSuperAdmin ? '' : 'disabled'}>Delete</button>
       </td>
     </tr>
   `).join('');
+}
+
+function toggleSelectAll(cb) {
+  document.querySelectorAll('.selectReview').forEach(ch => ch.checked = cb.checked);
+}
+
+function getSelectedIds() {
+  return Array.from(document.querySelectorAll('.selectReview:checked')).map(x => Number(x.dataset.id));
 }
 
 async function approveReview(id) {
@@ -89,6 +112,52 @@ async function approveReview(id) {
     alert('Approve that bai');
     return;
   }
+  loadReviews();
+}
+
+async function rejectReview(id) {
+  const response = await fetch(`/admin/reviews/${id}/reject`, { method: 'PATCH' });
+  if (!response.ok) {
+    alert('Reject that bai');
+    return;
+  }
+  loadReviews();
+}
+
+async function deleteReview(id) {
+  if (!confirm('Xóa review #' + id + '?')) return;
+  const response = await fetch(`/admin/reviews/${id}`, { method: 'DELETE' });
+  if (response.status !== 204) {
+    alert('Xóa review thất bại');
+    return;
+  }
+  loadReviews();
+}
+
+async function bulkApprove() {
+  if (!isAdminRole) { return; }
+  const ids = getSelectedIds();
+  if (!ids.length) { alert('Chưa chọn review nào'); return; }
+  const response = await fetch('/admin/reviews/bulk-approve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(ids)
+  });
+  if (!response.ok) { alert('Bulk approve thất bại'); return; }
+  loadReviews();
+}
+
+async function bulkDeleteReviews() {
+  if (!isSuperAdmin) { return; }
+  const ids = getSelectedIds();
+  if (!ids.length) { alert('Chưa chọn review nào'); return; }
+  if (!confirm('Xóa ' + ids.length + ' review đã chọn?')) return;
+  const response = await fetch('/admin/reviews/bulk-delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(ids)
+  });
+  if (response.status !== 204) { alert('Xóa hàng loạt thất bại'); return; }
   loadReviews();
 }
 

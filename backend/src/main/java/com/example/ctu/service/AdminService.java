@@ -41,19 +41,28 @@ public class AdminService {
     private final ReviewRepository reviewRepository;
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private final AuditLogService auditLogService;
+    private final CurrentUserService currentUserService;
 
     public AdminService(FacultyRepository facultyRepository,
                         SubjectRepository subjectRepository,
                         LecturerRepository lecturerRepository,
                         ReviewRepository reviewRepository,
                         ReportRepository reportRepository,
-                        UserRepository userRepository) {
+                        UserRepository userRepository,
+                        org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
+                        AuditLogService auditLogService,
+                        CurrentUserService currentUserService) {
         this.facultyRepository = facultyRepository;
         this.subjectRepository = subjectRepository;
         this.lecturerRepository = lecturerRepository;
         this.reviewRepository = reviewRepository;
         this.reportRepository = reportRepository;
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.auditLogService = auditLogService;
+        this.currentUserService = currentUserService;
     }
 
     @Transactional
@@ -61,7 +70,20 @@ public class AdminService {
         if (facultyRepository.findByCode(request.code()).isPresent()) {
             throw new BadRequestException("Mã khoa đã tồn tại");
         }
-        return facultyRepository.save(Faculty.builder().name(request.name()).code(request.code()).build());
+        Faculty faculty = facultyRepository.save(Faculty.builder().name(request.name()).code(request.code()).build());
+        
+        // Audit logging
+        try {
+            User currentUser = currentUserService.requireCurrentUser();
+            if (currentUser != null) {
+                auditLogService.logSimple(currentUser, "CREATE", "Faculty", faculty.getId(), 
+                    "Tạo mới khoa: " + faculty.getName());
+            }
+        } catch (Exception e) {
+            // Silently fail audit logging to not disrupt main operation
+        }
+        
+        return faculty;
     }
 
     @Transactional
@@ -173,6 +195,17 @@ public class AdminService {
                         throw new BadRequestException("Không thể xóa khoa đang có người dùng");
                 }
                 facultyRepository.delete(faculty);
+                
+                // Audit logging
+                try {
+                    User currentUser = currentUserService.requireCurrentUser();
+                    if (currentUser != null) {
+                        auditLogService.logSimple(currentUser, "DELETE", "Faculty", faculty.getId(), 
+                            "Xóa khoa: " + faculty.getName());
+                    }
+                } catch (Exception e) {
+                    // Silently fail audit logging to not disrupt main operation
+                }
         }
 
         @Transactional
@@ -231,6 +264,60 @@ public class AdminService {
                         throw new BadRequestException("Không thể xóa giảng viên đã có review");
                 }
                 lecturerRepository.delete(lecturer);
+        }
+
+        @Transactional(readOnly = true)
+        public AdminDtos.PageResponse<AdminDtos.ReportItem> listReports(int page, int size) {
+                int safePage = Math.max(page, 0);
+                int safeSize = Math.min(Math.max(size, 1), 100);
+                Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+                Page<Report> reportPage = reportRepository.findAll(pageable);
+                List<AdminDtos.ReportItem> content = reportPage.getContent().stream()
+                                .map(report -> new AdminDtos.ReportItem(
+                                                report.getId(),
+                                                report.getReview().getId(),
+                                                report.getReview().getLecturer().getId(),
+                                                report.getReview().getLecturer().getFullName(),
+                                                report.getReview().getComment(),
+                                                report.getReason(),
+                                                report.getCreatedAt()))
+                                .toList();
+                return new AdminDtos.PageResponse<>(content, reportPage.getNumber(), reportPage.getSize(), reportPage.getTotalElements(), reportPage.getTotalPages(), reportPage.isFirst(), reportPage.isLast());
+        }
+
+        @Transactional
+        public void deleteReport(Long reportId) {
+                Report report = reportRepository.findById(reportId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Report không tồn tại"));
+                reportRepository.delete(report);
+        }
+
+        @Transactional
+        public String resetUserPassword(Long userId, AdminDtos.ResetUserPasswordRequest request) {
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
+                String newPassword = request.newPassword();
+                user.setPasswordHash(passwordEncoder.encode(newPassword));
+                userRepository.save(user);
+                
+                // Audit logging
+                try {
+                    User currentUser = currentUserService.requireCurrentUser();
+                    if (currentUser != null) {
+                        auditLogService.logSimple(currentUser, "UPDATE", "User", userId, 
+                            "Đặt lại mật khẩu cho người dùng: " + user.getEmail());
+                    }
+                } catch (Exception e) {
+                    // Silently fail audit logging
+                }
+                
+                return newPassword;
+        }
+
+        @Transactional
+        public void bulkDeleteReports(List<Long> reportIds) {
+                List<Report> reports = reportRepository.findAllById(reportIds);
+                reportRepository.deleteAll(reports);
         }
 
     @Transactional
@@ -371,6 +458,11 @@ public class AdminService {
         }
 
         @Transactional
+        public void bulkDeleteReviews(List<Long> reviewIds) {
+                reviewIds.forEach(this::deleteReview);
+        }
+
+        @Transactional
         public Lecturer unhideLecturer(Long lecturerId) {
                 Lecturer lecturer = lecturerRepository.findById(lecturerId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Giảng viên không tồn tại"));
@@ -400,7 +492,17 @@ public class AdminService {
                 User target = findAdminUser(userId);
                 ensureSuperAdminSafety(target, true);
                 target.setLocked(true);
-                return toUserItem(userRepository.save(target));
+                User saved = userRepository.save(target);
+                
+                // Audit logging
+                try {
+                    auditLogService.logSimple(actor, "UPDATE", "User", userId, 
+                        "Khóa người dùng: " + target.getEmail());
+                } catch (Exception e) {
+                    // Silently fail audit logging
+                }
+                
+                return toUserItem(saved);
         }
 
         @Transactional
@@ -410,7 +512,17 @@ public class AdminService {
                 }
                 User target = findAdminUser(userId);
                 target.setLocked(false);
-                return toUserItem(userRepository.save(target));
+                User saved = userRepository.save(target);
+                
+                // Audit logging
+                try {
+                    auditLogService.logSimple(actor, "UPDATE", "User", userId, 
+                        "Mở khóa người dùng: " + target.getEmail());
+                } catch (Exception e) {
+                    // Silently fail audit logging
+                }
+                
+                return toUserItem(saved);
         }
 
         @Transactional
@@ -469,6 +581,7 @@ public class AdminService {
                                 user.getFaculty().getName(),
                                 user.getRole(),
                                 user.isVerified(),
+                                user.isLocked(),
                                 user.getCreatedAt()
                 );
         }
@@ -537,6 +650,7 @@ public class AdminService {
                                                 user.getFaculty().getName(),
                                                 user.getRole(),
                                                 user.isVerified(),
+                                                user.isLocked(),
                                                 user.getCreatedAt()
                                 ))
                                 .toList();

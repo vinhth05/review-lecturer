@@ -51,7 +51,7 @@ public final class AuthDtos {
     ) {
     }
 
-    public record AuthResponse(String token, Role role, boolean verified, String fullName, String facultyName) {
+    public record AuthResponse(String token, Role role, boolean verified, String fullName, String facultyName, String refreshToken) {
     }
 
     public record ProfileResponse(
@@ -62,5 +62,11 @@ public final class AuthDtos {
             Role role,
             boolean verified
     ) {
+    }
+
+    public record RefreshTokenRequest(@NotBlank String refreshToken) {
+    }
+
+    public record RefreshTokenResponse(String token, String refreshToken) {
     }
 }

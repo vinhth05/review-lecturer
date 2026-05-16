@@ -16,7 +16,11 @@
       </div>
       <nav class="nav">
         <a href="/admin-panel">Dashboard</a>
+        <a href="/admin-panel/faculties">Faculties</a>
+        <a href="/admin-panel/subjects">Subjects</a>
+        <a href="/admin-panel/lecturers">Lecturers</a>
         <a href="/admin-panel/reviews">Reviews</a>
+        <a href="/admin-panel/reports">Reports</a>
         <a href="/admin-panel/users">Users</a>
         <a href="/admin-panel/keywords">Keywords</a>
         <a class="nav-primary" href="/logout">Đăng xuất</a>
@@ -33,9 +37,9 @@
 
     <section class="section">
       <div style="margin-bottom:12px">
-        <button id="exportUsersBtn" onclick="exportUsers()">Export Users CSV</button>
+        <button id="exportUsersBtn" onclick="exportUsers()" th:if="${isSuperAdmin}">Export Users CSV</button>
         <button id="exportReviewsBtn" onclick="exportReviews()">Export Reviews CSV</button>
-        <button id="bulkVerifyBtn" onclick="bulkVerifySelected()" ${isSuperAdmin ? '' : 'disabled'}>Bulk Verify Selected</button>
+        <button id="bulkVerifyBtn" onclick="bulkVerifySelected()" th:if="${isSuperAdmin}">Bulk Verify Selected</button>
       </div>
       <div class="table-wrap">
         <table class="admin-table" id="usersTable">
@@ -48,6 +52,7 @@
             <th>Khoa</th>
             <th>Role</th>
             <th>Verified</th>
+            <th>Lock</th>
             <th>Actions</th>
           </tr>
           </thead>
@@ -60,6 +65,7 @@
 
 <script th:inline="javascript">
 const isSuperAdmin = /*[[${isSuperAdmin}]]*/ false;
+const isAdminRole = /*[[${isAdminRole}]]*/ false;
 
 async function loadUsers() {
   const response = await fetch('/admin/users?page=0&size=50');
@@ -76,7 +82,13 @@ async function loadUsers() {
       </select>
     `;
 
-    const verifyBtn = user.verified ? '' : `<button onclick="verifyUser(${user.id})" ${isSuperAdmin ? '' : 'disabled'}>Verify</button>`;
+    const verifiedBtn = user.verified
+      ? `<button onclick="unverifyUser(${user.id})" ${isSuperAdmin ? '' : 'disabled'}>Unverify</button>`
+      : `<button onclick="verifyUser(${user.id})" ${isSuperAdmin ? '' : 'disabled'}>Verify</button>`;
+    const lockBtn = user.locked
+      ? `<button onclick="unlockUser(${user.id})" ${isAdminRole ? '' : 'disabled'}>Unlock</button>`
+      : `<button onclick="lockUser(${user.id})" ${isAdminRole ? '' : 'disabled'}>Lock</button>`;
+    const resetBtn = `<button onclick="resetPassword(${user.id})" ${isAdminRole ? '' : 'disabled'}>Reset Password</button>`;
     const deleteBtn = `<button onclick="deleteUser(${user.id})" ${isSuperAdmin ? '' : 'disabled'}>Delete</button>`;
 
     return `
@@ -86,9 +98,10 @@ async function loadUsers() {
         <td>${user.fullName}</td>
         <td>${user.email}</td>
         <td>${user.facultyName}</td>
-        <td>${user.role}</td>
+        <td>${roleSelect}</td>
         <td>${user.verified ? 'Yes' : 'No'}</td>
-        <td>${roleSelect} ${verifyBtn} ${deleteBtn}</td>
+        <td>${user.locked ? 'Locked' : 'Active'}</td>
+        <td>${verifiedBtn} ${lockBtn} ${resetBtn} ${deleteBtn}</td>
       </tr>
     `;
   }).join('');
@@ -130,6 +143,44 @@ async function verifyUser(userId) {
   const res = await fetch(`/admin/users/${userId}/verified`, { method: 'PATCH' });
   if (!res.ok) { alert('Verify thất bại'); return; }
   loadUsers();
+}
+
+async function unverifyUser(userId) {
+  if (!confirm('Xác nhận bỏ verify user #' + userId + '?')) return;
+  const res = await fetch(`/admin/users/${userId}/unverify`, { method: 'PATCH' });
+  if (!res.ok) { alert('Unverify thất bại'); return; }
+  loadUsers();
+}
+
+async function lockUser(userId) {
+  if (!confirm('Xác nhận khóa user #' + userId + '?')) return;
+  const res = await fetch(`/admin/users/${userId}/lock`, { method: 'PATCH' });
+  if (!res.ok) { alert('Khóa thất bại'); return; }
+  loadUsers();
+}
+
+async function unlockUser(userId) {
+  if (!confirm('Xác nhận mở khóa user #' + userId + '?')) return;
+  const res = await fetch(`/admin/users/${userId}/unlock`, { method: 'PATCH' });
+  if (!res.ok) { alert('Mở khóa thất bại'); return; }
+  loadUsers();
+}
+
+async function resetPassword(userId) {
+  const newPassword = prompt('Nhập mật khẩu mới cho user #' + userId + ':');
+  if (!newPassword) return;
+  const res = await fetch(`/admin/users/${userId}/reset-password`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ newPassword })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: 'Reset thất bại' }));
+    alert(err.message || 'Reset thất bại');
+    return;
+  }
+  const text = await res.text();
+  alert('Đã đặt mật khẩu mới: ' + text);
 }
 
 async function deleteUser(userId) {

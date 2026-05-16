@@ -14,7 +14,7 @@ public record AppProperties(
     Kafka kafka,
     Seed seed
 ) {
-    public record Jwt(String secret, long expirationMinutes) {
+    public record Jwt(String secret, long expirationMinutes, long refreshTokenExpirationDays) {
     }
 
     public record Otp(long ttlMinutes, String appName, String mailSubject) {

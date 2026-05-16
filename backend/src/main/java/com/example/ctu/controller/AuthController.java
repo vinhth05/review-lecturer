@@ -62,4 +62,12 @@ public class AuthController {
     public ResponseEntity<String> resetPassword(@Valid @RequestBody AuthDtos.ResetPasswordRequest request) {
         return ResponseEntity.ok(authService.resetPassword(request));
     }
+
+    /**
+     * Lam moi access token bang refresh token.
+     */
+    @PostMapping("/refresh-token")
+    public ResponseEntity<AuthDtos.RefreshTokenResponse> refreshToken(@Valid @RequestBody AuthDtos.RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refreshAccessToken(request));
+    }
 }

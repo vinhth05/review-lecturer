@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Lecturers</title>
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page-shell">
+  <header class="topbar">
+    <div class="topbar-content">
+      <div class="brand">
+        <div class="brand-title">Admin Lecturers</div>
+        <div class="brand-sub">Quản lý giảng viên</div>
+      </div>
+      <nav class="nav">
+        <a href="/admin-panel">Dashboard</a>
+        <a href="/admin-panel/faculties">Faculties</a>
+        <a href="/admin-panel/subjects">Subjects</a>
+        <a href="/admin-panel/lecturers">Lecturers</a>
+        <a href="/admin-panel/reports">Reports</a>
+        <a href="/admin-panel/reviews">Reviews</a>
+        <a href="/admin-panel/users">Users</a>
+        <a href="/admin-panel/keywords">Keywords</a>
+        <a class="nav-primary" href="/logout">Đăng xuất</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="main-content admin-page">
+    <section class="hero">
+      <div class="eyebrow">Lecturer CRUD</div>
+      <h1>Quản lý giảng viên</h1>
+      <p>Thêm, sửa, ẩn/hiện và xóa giảng viên.</p>
+    </section>
+
+    <section class="section">
+      <form class="form" id="lecturerForm" th:if="${isSuperAdmin}">
+        <div class="field"><label>Mã GV</label><input type="text" id="lecturerCode" required></div>
+        <div class="field"><label>Họ tên</label><input type="text" id="lecturerName" required></div>
+        <div class="field"><label>Khoa</label><select id="lecturerFacultyId" required></select></div>
+        <div class="field"><label>Môn</label><select id="lecturerSubjectId"><option value="">-- Không chọn --</option></select></div>
+        <button class="button primary" type="submit">Thêm giảng viên</button>
+      </form>
+      <div style="margin-top:12px" th:if="${isSuperAdmin}">
+        <button class="button secondary" onclick="importCtuLecturers()">Import CTU Lecturers</button>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="table-wrap">
+        <table class="admin-table" id="lecturersTable">
+          <thead>
+          <tr>
+            <th>ID</th><th>Mã GV</th><th>Họ tên</th><th>Khoa</th><th>Môn</th><th>Trạng thái</th><th>Thao tác</th>
+          </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+</main>
+
+<script th:inline="javascript">
+const isSuperAdmin = /*[[${isSuperAdmin}]]*/ false;
+let faculties = [];
+let subjects = [];
+
+async function loadReferenceData() {
+  const [facultyRes, subjectRes] = await Promise.all([
+    fetch('/admin/faculties?page=0&size=200'),
+    fetch('/admin/subjects?page=0&size=200')
+  ]);
+  faculties = (await facultyRes.json()).content || [];
+  subjects = (await subjectRes.json()).content || [];
+
+  const facultySelect = document.getElementById('lecturerFacultyId');
+  if (facultySelect) {
+    facultySelect.innerHTML = faculties.map(f => `<option value="${f.id}">${f.name} (${f.code})</option>`).join('');
+  }
+
+  const subjectSelect = document.getElementById('lecturerSubjectId');
+  if (subjectSelect) {
+    subjectSelect.innerHTML = '<option value="">-- Không chọn --</option>' + subjects.map(s => `<option value="${s.id}">${s.name} (${s.code})</option>`).join('');
+  }
+}
+
+async function loadLecturers() {
+  const res = await fetch('/admin/lecturers?page=0&size=200');
+  if (!res.ok) { alert('Không tải được danh sách giảng viên'); return; }
+  const data = await res.json();
+  const body = document.querySelector('#lecturersTable tbody');
+  body.innerHTML = (data.content || []).map(item => `
+    <tr>
+      <td>${item.id}</td>
+      <td>${item.lecturerCode}</td>
+      <td>${item.fullName}</td>
+      <td>${item.facultyName}</td>
+      <td>${item.subjectName || ''}</td>
+      <td>${item.status}</td>
+      <td>
+        <button class="button secondary" onclick="editLecturer(${item.id}, '${escapeJs(item.lecturerCode)}', '${escapeJs(item.fullName)}', ${item.facultyId}, ${item.subjectId ?? 'null'}, '${item.status}')" ${isSuperAdmin ? '' : 'disabled'}>Sửa</button>
+        <button class="button secondary" onclick="toggleLecturer(${item.id}, '${item.status}')" ${isSuperAdmin ? '' : 'disabled'}>${item.status === 'HIDDEN' ? 'Hiện' : 'Ẩn'}</button>
+        <button class="button secondary" onclick="deleteLecturer(${item.id})" ${isSuperAdmin ? '' : 'disabled'}>Xóa</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function escapeJs(value) {
+  return String(value ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');
+}
+
+document.getElementById('lecturerForm')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const lecturerCode = document.getElementById('lecturerCode').value.trim();
+  const fullName = document.getElementById('lecturerName').value.trim();
+  const facultyId = Number(document.getElementById('lecturerFacultyId').value);
+  const subjectRaw = document.getElementById('lecturerSubjectId').value;
+  const subjectId = subjectRaw ? Number(subjectRaw) : null;
+  const res = await fetch('/admin/lecturers', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lecturerCode, fullName, facultyId, subjectId })
+  });
+  if (!res.ok) { alert('Thêm giảng viên thất bại'); return; }
+  event.target.reset();
+  loadLecturers();
+});
+
+async function editLecturer(id, currentCode, currentName, currentFacultyId, currentSubjectId, currentStatus) {
+  if (!isSuperAdmin) return;
+  const lecturerCode = prompt('Mã GV mới:', currentCode);
+  if (lecturerCode === null) return;
+  const fullName = prompt('Họ tên mới:', currentName);
+  if (fullName === null) return;
+  const facultyId = prompt('ID khoa mới:', String(currentFacultyId));
+  if (facultyId === null) return;
+  const subjectId = prompt('ID môn mới (để trống nếu không có):', currentSubjectId == null ? '' : String(currentSubjectId));
+  if (subjectId === null) return;
+  const status = prompt('Trạng thái (ACTIVE/HIDDEN):', currentStatus);
+  if (status === null) return;
+  const payload = {
+    lecturerCode: lecturerCode.trim(),
+    fullName: fullName.trim(),
+    facultyId: Number(facultyId),
+    subjectId: subjectId.trim() ? Number(subjectId) : null,
+    status: status.trim()
+  };
+  const res = await fetch(`/admin/lecturers/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) { alert('Sửa giảng viên thất bại'); return; }
+  loadLecturers();
+}
+
+async function toggleLecturer(id, currentStatus) {
+  if (!isSuperAdmin) return;
+  const endpoint = currentStatus === 'HIDDEN' ? `/admin/lecturers/${id}/unhide` : `/admin/lecturers/${id}/hide`;
+  const res = await fetch(endpoint, { method: 'PATCH' });
+  if (!res.ok) { alert('Thao tác ẩn/hiện thất bại'); return; }
+  loadLecturers();
+}
+
+async function deleteLecturer(id) {
+  if (!isSuperAdmin) return;
+  if (!confirm('Xóa giảng viên #' + id + '?')) return;
+  const res = await fetch(`/admin/lecturers/${id}`, { method: 'DELETE' });
+  if (res.status !== 204) { alert('Xóa giảng viên thất bại'); return; }
+  loadLecturers();
+}
+
+async function importCtuLecturers() {
+  if (!isSuperAdmin) return;
+  const maxPages = prompt('Số trang tối đa khi import (để trống = mặc định):', '');
+  const body = {};
+  if (maxPages && maxPages.trim()) body.maxPages = Number(maxPages);
+  const res = await fetch('/admin/lecturers/import/ctu', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) { alert('Import thất bại'); return; }
+  const data = await res.json();
+  alert(`Import xong: ${data.imported} thêm mới, ${data.skipped} bỏ qua`);
+  loadLecturers();
+}
+
+Promise.all([loadReferenceData(), loadLecturers()]);
+</script>
+</body>
+</html>

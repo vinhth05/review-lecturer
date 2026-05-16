@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.ctu.config.AppProperties;
 import com.example.ctu.dto.auth.AuthDtos;
 import com.example.ctu.entity.Faculty;
+import com.example.ctu.entity.RefreshToken;
 import com.example.ctu.entity.User;
 import com.example.ctu.entity.enums.Role;
 import com.example.ctu.exception.BadRequestException;
@@ -35,6 +36,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final OtpService otpService;
+    private final RefreshTokenService refreshTokenService;
     private final com.example.ctu.repository.PendingRegistrationRepository pendingRegistrationRepository;
     private final AppProperties properties;
 
@@ -62,6 +64,7 @@ public class AuthService {
                        AuthenticationManager authenticationManager,
                        JwtService jwtService,
                        OtpService otpService,
+                       RefreshTokenService refreshTokenService,
                        com.example.ctu.repository.PendingRegistrationRepository pendingRegistrationRepository,
                        AppProperties properties,
                        @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.admin.email:admin@ctu.edu.vn}") String adminSeedEmail,
@@ -85,6 +88,7 @@ public class AuthService {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.otpService = otpService;
+        this.refreshTokenService = refreshTokenService;
         this.pendingRegistrationRepository = pendingRegistrationRepository;
         this.properties = properties;
         this.adminSeedEmail = adminSeedEmail;
@@ -376,7 +380,8 @@ public class AuthService {
 
     private AuthDtos.AuthResponse createAuthResponse(User user) {
         String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name());
-        return new AuthDtos.AuthResponse(token, user.getRole(), user.isVerified(), user.getFullName(), user.getFaculty().getName());
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+        return new AuthDtos.AuthResponse(token, user.getRole(), user.isVerified(), user.getFullName(), user.getFaculty().getName(), refreshToken.getToken());
     }
 
     private AuthDtos.ProfileResponse toProfileResponse(User user) {
@@ -388,5 +393,13 @@ public class AuthService {
                 user.getRole(),
                 user.isVerified()
         );
+    }
+
+    @Transactional
+    public AuthDtos.RefreshTokenResponse refreshAccessToken(AuthDtos.RefreshTokenRequest request) {
+        RefreshToken refreshToken = refreshTokenService.rotateRefreshToken(request.refreshToken());
+        User user = refreshToken.getUser();
+        String newToken = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+        return new AuthDtos.RefreshTokenResponse(newToken, refreshToken.getToken());
     }
 }

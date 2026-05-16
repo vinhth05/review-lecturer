@@ -16,6 +16,10 @@
       </div>
       <nav class="nav">
         <a href="/admin-panel">Dashboard</a>
+        <a href="/admin-panel/faculties">Faculties</a>
+        <a href="/admin-panel/subjects">Subjects</a>
+        <a href="/admin-panel/lecturers">Lecturers</a>
+        <a href="/admin-panel/reports">Reports</a>
         <a href="/admin-panel/reviews">Reviews</a>
         <a href="/admin-panel/users">Users</a>
         <a href="/admin-panel/keywords">Keywords</a>
@@ -50,7 +54,7 @@
             <th>ID</th>
             <th>Từ khóa</th>
             <th>Ngày tạo</th>
-            <th>Xóa</th>
+            <th>Thao tác</th>
           </tr>
           </thead>
           <tbody></tbody>
@@ -76,9 +80,33 @@ async function loadKeywords() {
       <td>${item.id}</td>
       <td>${item.keyword}</td>
       <td>${item.createdAt || ''}</td>
-      <td>${isSuperAdmin ? `<button class="button secondary" onclick="deleteKeyword(${item.id})">Xoa</button>` : ''}</td>
+      <td>
+        ${isSuperAdmin ? `<button class="button secondary" onclick="editKeyword(${item.id}, ${JSON.stringify(item.keyword)})">Sửa</button>` : ''}
+        ${isSuperAdmin ? `<button class="button secondary" onclick="deleteKeyword(${item.id})">Xóa</button>` : ''}
+      </td>
     </tr>
   `).join('');
+}
+
+async function editKeyword(id, currentKeyword) {
+  if (!isSuperAdmin) {
+    return;
+  }
+  const keyword = prompt('Nhập keyword mới:', currentKeyword);
+  if (keyword === null) {
+    return;
+  }
+  const response = await fetch(`/admin/toxic-keywords/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keyword: keyword.trim() })
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Sửa thất bại' }));
+    alert(error.message || 'Sửa thất bại');
+    return;
+  }
+  loadKeywords();
 }
 
 async function deleteKeyword(id) {

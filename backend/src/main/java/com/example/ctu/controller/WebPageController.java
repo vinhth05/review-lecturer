@@ -266,6 +266,46 @@ public class WebPageController {
         return "admin-keywords";
     }
 
+    @GetMapping("/admin-panel/reports")
+    public String adminReportsPage(Model model, Authentication authentication) {
+        if (!hasAdminRole(authentication)) {
+            return "redirect:/login";
+        }
+        addCommonModel(model, authentication);
+        model.addAttribute("isSuperAdmin", hasSuperAdminRole(authentication));
+        return "admin-reports";
+    }
+
+    @GetMapping("/admin-panel/faculties")
+    public String adminFacultiesPage(Model model, Authentication authentication) {
+        if (!hasAdminRole(authentication)) {
+            return "redirect:/login";
+        }
+        addCommonModel(model, authentication);
+        model.addAttribute("isSuperAdmin", hasSuperAdminRole(authentication));
+        return "admin-faculties";
+    }
+
+    @GetMapping("/admin-panel/subjects")
+    public String adminSubjectsPage(Model model, Authentication authentication) {
+        if (!hasAdminRole(authentication)) {
+            return "redirect:/login";
+        }
+        addCommonModel(model, authentication);
+        model.addAttribute("isSuperAdmin", hasSuperAdminRole(authentication));
+        return "admin-subjects";
+    }
+
+    @GetMapping("/admin-panel/lecturers")
+    public String adminLecturersPage(Model model, Authentication authentication) {
+        if (!hasAdminRole(authentication)) {
+            return "redirect:/login";
+        }
+        addCommonModel(model, authentication);
+        model.addAttribute("isSuperAdmin", hasSuperAdminRole(authentication));
+        return "admin-lecturers";
+    }
+
     @PostMapping("/profile/update")
     public String profileUpdateSubmit(@RequestParam String fullName,
                                       @RequestParam Long facultyId,
@@ -328,6 +368,7 @@ public class WebPageController {
         model.addAttribute("currentRole", authentication == null || authentication.getAuthorities().isEmpty()
                 ? null
                 : authentication.getAuthorities().iterator().next().getAuthority());
+        model.addAttribute("isAdminRole", hasAdminRole(authentication));
     }
 
     private boolean isAnonymous(Authentication authentication) {

@@ -1,18 +1,19 @@
 package com.example.ctu.service;
 
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.ctu.config.AppProperties;
 import com.example.ctu.dto.admin.AdminDtos;
 import com.example.ctu.entity.ToxicKeyword;
 import com.example.ctu.exception.BadRequestException;
 import com.example.ctu.exception.ResourceNotFoundException;
 import com.example.ctu.repository.ToxicKeywordRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @SuppressWarnings("null")
@@ -62,6 +63,22 @@ public class ToxicKeywordService {
             throw new BadRequestException("Keyword đã tồn tại");
         }
         ToxicKeyword entity = new ToxicKeyword();
+        entity.setKeyword(normalized);
+        ToxicKeyword saved = toxicKeywordRepository.save(entity);
+        return new AdminDtos.ToxicKeywordItem(saved.getId(), saved.getKeyword(), saved.getCreatedAt());
+    }
+
+    @Transactional
+    public AdminDtos.ToxicKeywordItem update(Long id, AdminDtos.UpdateToxicKeywordRequest request) {
+        ToxicKeyword entity = toxicKeywordRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Keyword không tồn tại"));
+        String normalized = normalize(request.keyword());
+        if (normalized.isBlank()) {
+            throw new BadRequestException("Keyword không hợp lệ");
+        }
+        if (!entity.getKeyword().equals(normalized) && toxicKeywordRepository.existsByKeyword(normalized)) {
+            throw new BadRequestException("Keyword đã tồn tại");
+        }
         entity.setKeyword(normalized);
         ToxicKeyword saved = toxicKeywordRepository.save(entity);
         return new AdminDtos.ToxicKeywordItem(saved.getId(), saved.getKeyword(), saved.getCreatedAt());

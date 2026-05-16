@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Reports</title>
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page-shell">
+  <header class="topbar">
+    <div class="topbar-content">
+      <div class="brand">
+        <div class="brand-title">Admin Reports</div>
+        <div class="brand-sub">Quản lý report của review</div>
+      </div>
+      <nav class="nav">
+        <a href="/admin-panel">Dashboard</a>
+        <a href="/admin-panel/faculties">Faculties</a>
+        <a href="/admin-panel/subjects">Subjects</a>
+        <a href="/admin-panel/lecturers">Lecturers</a>
+        <a href="/admin-panel/reports">Reports</a>
+        <a href="/admin-panel/reviews">Reviews</a>
+        <a href="/admin-panel/users">Users</a>
+        <a href="/admin-panel/keywords">Keywords</a>
+        <a class="nav-primary" href="/logout">Đăng xuất</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="main-content admin-page">
+    <section class="hero">
+      <div class="eyebrow">Report Management</div>
+      <h1>Danh sách báo cáo</h1>
+      <p>Xem và xóa report của review ngay trong web admin.</p>
+    </section>
+
+    <section class="section">
+      <div style="margin-bottom:12px">
+        <button class="button secondary" onclick="bulkDeleteSelected()" th:disabled="${!isAdminRole}">Xóa report đã chọn</button>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table" id="reportsTable">
+          <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAllReports" onchange="toggleSelectAll(this)"></th>
+            <th>ID</th><th>Review</th><th>Giảng viên</th><th>Nội dung</th><th>Lý do</th><th>Ngày tạo</th><th>Thao tác</th>
+          </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+</main>
+
+<script th:inline="javascript">
+const isAdminRole = /*[[${isAdminRole}]]*/ false;
+
+async function loadReports() {
+  const res = await fetch('/admin/reports?page=0&size=200');
+  if (!res.ok) { alert('Không tải được report'); return; }
+  const data = await res.json();
+  const body = document.querySelector('#reportsTable tbody');
+  body.innerHTML = (data.content || []).map(item => `
+    <tr>
+      <td><input type="checkbox" class="selectReport" data-id="${item.id}"></td>
+      <td>${item.id}</td>
+      <td>#${item.reviewId}</td>
+      <td>${item.lecturerName}</td>
+      <td>${item.comment || ''}</td>
+      <td>${item.reason || ''}</td>
+      <td>${item.createdAt || ''}</td>
+      <td><button class="button secondary" onclick="deleteReport(${item.id})" ${isAdminRole ? '' : 'disabled'}>Xóa</button></td>
+    </tr>
+  `).join('');
+}
+
+function toggleSelectAll(cb) {
+  document.querySelectorAll('.selectReport').forEach(ch => ch.checked = cb.checked);
+}
+
+function getSelectedIds() {
+  return Array.from(document.querySelectorAll('.selectReport:checked')).map(x => Number(x.dataset.id));
+}
+
+async function deleteReport(id) {
+  if (!isAdminRole) return;
+  if (!confirm('Xóa report #' + id + '?')) return;
+  const res = await fetch(`/admin/reports/${id}`, { method: 'DELETE' });
+  if (res.status !== 204) { alert('Xóa report thất bại'); return; }
+  loadReports();
+}
+
+async function bulkDeleteSelected() {
+  if (!isAdminRole) return;
+  const ids = getSelectedIds();
+  if (!ids.length) { alert('Chưa chọn report nào'); return; }
+  if (!confirm('Xóa ' + ids.length + ' report đã chọn?')) return;
+  const res = await fetch('/admin/reports/bulk-delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(ids)
+  });
+  if (res.status !== 204) { alert('Xóa hàng loạt thất bại'); return; }
+  loadReports();
+}
+
+loadReports();
+</script>
+</body>
+</html>

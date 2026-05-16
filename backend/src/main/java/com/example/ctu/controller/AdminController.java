@@ -198,10 +198,25 @@ public class AdminController {
         return toxicKeywordService.getAll();
     }
 
+    @GetMapping("/reports")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public AdminDtos.PageResponse<AdminDtos.ReportItem> reports(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return adminService.listReports(page, size);
+    }
+
     @PostMapping("/toxic-keywords")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<AdminDtos.ToxicKeywordItem> addToxicKeyword(@Valid @RequestBody AdminDtos.CreateToxicKeywordRequest request) {
         return ResponseEntity.ok(toxicKeywordService.add(request));
+    }
+
+    @PatchMapping("/toxic-keywords/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<AdminDtos.ToxicKeywordItem> updateToxicKeyword(@PathVariable Long id,
+                                                                         @Valid @RequestBody AdminDtos.UpdateToxicKeywordRequest request) {
+        return ResponseEntity.ok(toxicKeywordService.update(id, request));
     }
 
     @DeleteMapping("/toxic-keywords/{id}")
@@ -209,6 +224,27 @@ public class AdminController {
     public ResponseEntity<Void> deleteToxicKeyword(@PathVariable Long id) {
         toxicKeywordService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/reports/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<Void> deleteReport(@PathVariable Long id) {
+        adminService.deleteReport(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/reports/bulk-delete")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<Void> bulkDeleteReports(@RequestBody List<Long> ids) {
+        adminService.bulkDeleteReports(ids);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/users/{id}/reset-password")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<String> resetUserPassword(@PathVariable Long id, @Valid @RequestBody AdminDtos.ResetUserPasswordRequest request) {
+        String newPassword = adminService.resetUserPassword(id, request);
+        return ResponseEntity.ok(newPassword);
     }
 
     @PatchMapping("/reviews/{id}/reject")
@@ -221,6 +257,13 @@ public class AdminController {
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> deleteReview(@PathVariable Long id) {
         adminService.deleteReview(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/reviews/bulk-delete")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Void> bulkDeleteReviews(@RequestBody List<Long> ids) {
+        adminService.bulkDeleteReviews(ids);
         return ResponseEntity.noContent().build();
     }
 

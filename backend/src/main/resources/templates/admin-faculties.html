@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Faculties</title>
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="page-shell">
+  <header class="topbar">
+    <div class="topbar-content">
+      <div class="brand">
+        <div class="brand-title">Admin Faculties</div>
+        <div class="brand-sub">Quản lý khoa</div>
+      </div>
+      <nav class="nav">
+        <a href="/admin-panel">Dashboard</a>
+        <a href="/admin-panel/faculties">Faculties</a>
+        <a href="/admin-panel/subjects">Subjects</a>
+        <a href="/admin-panel/lecturers">Lecturers</a>
+        <a href="/admin-panel/reports">Reports</a>
+        <a href="/admin-panel/reviews">Reviews</a>
+        <a href="/admin-panel/users">Users</a>
+        <a href="/admin-panel/keywords">Keywords</a>
+        <a class="nav-primary" href="/logout">Đăng xuất</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="main-content admin-page">
+    <section class="hero">
+      <div class="eyebrow">Faculty CRUD</div>
+      <h1>Quản lý khoa</h1>
+      <p>Tạo, sửa, xóa khoa trực tiếp từ web admin.</p>
+    </section>
+
+    <section class="section">
+      <form class="form" id="facultyForm" th:if="${isSuperAdmin}">
+        <div class="field"><label>Tên khoa</label><input type="text" id="facultyName" required></div>
+        <div class="field"><label>Mã khoa</label><input type="text" id="facultyCode" required></div>
+        <button class="button primary" type="submit">Thêm khoa</button>
+      </form>
+      <p class="meta" th:if="${!isSuperAdmin}">Bạn chỉ có quyền xem danh sách.</p>
+    </section>
+
+    <section class="section">
+      <div class="table-wrap">
+        <table class="admin-table" id="facultiesTable">
+          <thead>
+          <tr>
+            <th>ID</th><th>Tên khoa</th><th>Mã khoa</th><th>Ngày tạo</th><th>Thao tác</th>
+          </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+</main>
+
+<script th:inline="javascript">
+const isSuperAdmin = /*[[${isSuperAdmin}]]*/ false;
+
+async function loadFaculties() {
+  const res = await fetch('/admin/faculties?page=0&size=100');
+  if (!res.ok) { alert('Không tải được danh sách khoa'); return; }
+  const data = await res.json();
+  const body = document.querySelector('#facultiesTable tbody');
+  body.innerHTML = (data.content || []).map(item => `
+    <tr>
+      <td>${item.id}</td>
+      <td>${item.name}</td>
+      <td>${item.code}</td>
+      <td>${item.createdAt || ''}</td>
+      <td>
+        <button class="button secondary" onclick="editFaculty(${item.id}, '${escapeJs(item.name)}', '${escapeJs(item.code)}')" ${isSuperAdmin ? '' : 'disabled'}>Sửa</button>
+        <button class="button secondary" onclick="deleteFaculty(${item.id})" ${isSuperAdmin ? '' : 'disabled'}>Xóa</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function escapeJs(value) {
+  return String(value ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');
+}
+
+document.getElementById('facultyForm')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const name = document.getElementById('facultyName').value.trim();
+  const code = document.getElementById('facultyCode').value.trim();
+  const res = await fetch('/admin/faculties', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, code })
+  });
+  if (!res.ok) { alert('Thêm khoa thất bại'); return; }
+  event.target.reset();
+  loadFaculties();
+});
+
+async function editFaculty(id, currentName, currentCode) {
+  if (!isSuperAdmin) return;
+  const name = prompt('Tên khoa mới:', currentName);
+  if (name === null) return;
+  const code = prompt('Mã khoa mới:', currentCode);
+  if (code === null) return;
+  const res = await fetch(`/admin/faculties/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name.trim(), code: code.trim() })
+  });
+  if (!res.ok) { alert('Sửa khoa thất bại'); return; }
+  loadFaculties();
+}
+
+async function deleteFaculty(id) {
+  if (!isSuperAdmin) return;
+  if (!confirm('Xóa khoa #' + id + '?')) return;
+  const res = await fetch(`/admin/faculties/${id}`, { method: 'DELETE' });
+  if (res.status !== 204) { alert('Xóa khoa thất bại'); return; }
+  loadFaculties();
+}
+
+loadFaculties();
+</script>
+</body>
+</html>
