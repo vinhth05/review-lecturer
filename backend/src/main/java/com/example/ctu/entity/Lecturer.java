@@ -8,6 +8,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.FetchType;
@@ -30,7 +31,11 @@ import java.time.Instant;
 @AllArgsConstructor
 @SuppressWarnings("unused")
 @Entity
-@Table(name = "lecturers")
+@Table(name = "lecturers", indexes = {
+    @Index(name = "idx_lecturer_faculty_status", columnList = "faculty_id, status"),
+    @Index(name = "idx_lecturer_subject_status", columnList = "subject_id, status"),
+    @Index(name = "idx_lecturer_status", columnList = "status")
+})
 public class Lecturer {
 
     @Id
