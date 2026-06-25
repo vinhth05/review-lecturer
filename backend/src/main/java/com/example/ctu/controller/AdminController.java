@@ -166,8 +166,9 @@ public class AdminController {
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public AdminDtos.PageResponse<AdminDtos.LecturerItem> lecturers(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return adminService.listLecturers(page, size);
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword) {
+        return adminService.listLecturers(page, size, keyword);
     }
 
     @PatchMapping("/lecturers/{id}")
