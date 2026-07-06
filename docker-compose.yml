@@ -1,11 +1,13 @@
 services:
-  # 1. Redis ban goc (nhe va de pull)
-  redis-chicken:
+  # 1. Redis
+  redis:
     image: redis:alpine
     container_name: lecture-redis
     ports:
       - "6379:6379"
     restart: always
+    volumes:
+      - redis-data:/data
 
   # 2. Zookeeper
   zookeeper:
@@ -23,9 +25,51 @@ services:
     environment:
       KAFKA_ADVERTISED_HOST_NAME: localhost
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_CREATE_TOPICS: "customer-account-topic:1:1"
+      KAFKA_CREATE_TOPICS: "otp-email-topic:1:1"
     depends_on:
       - zookeeper
+
+  # 4. SQL Server
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: lecture-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "yourStrong(!)Password"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+
+  # 5. Backend Spring Boot
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lecture-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_URL=jdbc:sqlserver://sqlserver:1433;databaseName=ctu_review;encrypt=true;trustServerCertificate=true
+      - REDIS_HOST=redis
+      - KAFKA_BOOTSTRAP_SERVERS=kafka-broker:9092
+    depends_on:
+      - sqlserver
+      - redis
+      - kafka-broker
+
+  # 6. Frontend React Vite
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: lecture-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8080
+    depends_on:
+      - backend
 
 volumes:
   sqlserver-data:
