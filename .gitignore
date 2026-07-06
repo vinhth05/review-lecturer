@@ -4,7 +4,7 @@ Thumbs.db
 
 # Logs
 *.log
-
+backend/src/main/resources/application.properties
 # Backend
 backend/target/
 backend/.mvn/

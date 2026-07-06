@@ -21,7 +21,7 @@ public class ToxicKeyword {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 255, columnDefinition = "nvarchar(100)")
+    @Column(nullable = false, unique = true, length = 100)
     private String keyword;
 
     @Column(name = "created_at", nullable = false, updatable = false)

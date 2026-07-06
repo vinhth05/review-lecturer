@@ -5,10 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -36,15 +33,4 @@ public class Faculty {
 
     @Column(nullable = false, unique = true, length = 50)
     private String code;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    @JdbcTypeCode(SqlTypes.TIMESTAMP)
-    private Instant createdAt;
-
-    @PrePersist
-    void prePersist() {
-        if (createdAt == null) {
-            createdAt = Instant.now();
-        }
-    }
 }
