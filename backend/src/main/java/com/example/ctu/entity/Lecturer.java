@@ -1,4 +1,4 @@
-package com.example.ctu.entity;
+﻿package com.example.ctu.entity;
 
 import com.example.ctu.entity.enums.LecturerStatus;
 import jakarta.persistence.Column;
@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -42,11 +43,11 @@ public class Lecturer {
     @Column(name = "full_name", nullable = false, columnDefinition = "NVARCHAR(255) DEFAULT 'Nv'")
     private String fullName;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "faculty_id")
     private Faculty faculty;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id")
     private Subject subject;
 
@@ -65,3 +66,4 @@ public class Lecturer {
         }
     }
 }
+
