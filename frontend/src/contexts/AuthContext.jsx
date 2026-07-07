@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
@@ -16,7 +17,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         setUser({ role: payload.role, email: payload.sub });
-      } catch (e) {
+      } catch {
         localStorage.removeItem('token');
       }
     }
