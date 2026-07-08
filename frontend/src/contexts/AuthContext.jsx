@@ -1,55 +1,56 @@
-/* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { authService } from '../services/authService';
+import { createContext, useContext, useState, useEffect } from "react"
 
-const AuthContext = createContext();
+const AuthContext = createContext(null)
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      // Decode JWT or fetch profile
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        setUser({ role: payload.role, email: payload.sub });
-      } catch {
-        localStorage.removeItem('token');
-      }
+    // Check local storage for existing session on initial load
+    const token = localStorage.getItem("access_token")
+    const storedUser = localStorage.getItem("user")
+    
+    if (token && storedUser) {
+      setUser(JSON.parse(storedUser))
     }
-    setLoading(false);
+    setLoading(false)
+  }, [])
 
-    const handleUnauthorized = () => {
-      setUser(null);
-      navigate('/login');
-    };
-    window.addEventListener('unauthorized', handleUnauthorized);
-    return () => window.removeEventListener('unauthorized', handleUnauthorized);
-  }, [navigate]);
-
-  const login = async (credentials) => {
-    const data = await authService.login(credentials);
-    localStorage.setItem('token', data.token);
-    const payload = JSON.parse(atob(data.token.split('.')[1]));
-    setUser({ role: payload.role, email: payload.sub });
-    navigate('/');
-  };
+  const login = (userData, token) => {
+    setUser(userData)
+    localStorage.setItem("access_token", token)
+    localStorage.setItem("user", JSON.stringify(userData))
+  }
 
   const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
-    navigate('/login');
-  };
+    setUser(null)
+    localStorage.removeItem("access_token")
+    localStorage.removeItem("user")
+  }
+
+  const value = {
+    user,
+    loading,
+    login,
+    logout,
+    isAuthenticated: !!user,
+    isStudent: user?.role === 'student',
+    isLecturer: user?.role === 'lecturer',
+    isAdmin: user?.role === 'admin'
+  }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={value}>
       {!loading && children}
     </AuthContext.Provider>
-  );
-};
+  )
+}
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider")
+  }
+  return context
+}

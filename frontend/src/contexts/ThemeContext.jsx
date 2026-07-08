@@ -1,38 +1,60 @@
-/* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useState, useMemo, useContext } from 'react';
-import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
+import { createContext, useContext, useEffect, useState } from "react"
 
-const ThemeContext = createContext();
+const initialState = {
+  theme: "system",
+  setTheme: () => null,
+}
 
-export const ThemeProvider = ({ children }) => {
-  const [mode, setMode] = useState('light');
+const ThemeProviderContext = createContext(initialState)
 
-  const toggleColorMode = () => {
-    setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
-  };
+export function ThemeProvider({
+  children,
+  defaultTheme = "system",
+  storageKey = "vite-ui-theme",
+  ...props
+}) {
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem(storageKey) || defaultTheme
+  )
 
-  const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode,
-          primary: {
-            main: '#1976d2',
-          },
-        },
-      }),
-    [mode],
-  );
+  useEffect(() => {
+    const root = window.document.documentElement
+
+    root.classList.remove("light", "dark")
+
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light"
+
+      root.classList.add(systemTheme)
+      return
+    }
+
+    root.classList.add(theme)
+  }, [theme])
+
+  const value = {
+    theme,
+    setTheme: (theme) => {
+      localStorage.setItem(storageKey, theme)
+      setTheme(theme)
+    },
+  }
 
   return (
-    <ThemeContext.Provider value={{ mode, toggleColorMode }}>
-      <MuiThemeProvider theme={theme}>
-        <CssBaseline />
-        {children}
-      </MuiThemeProvider>
-    </ThemeContext.Provider>
-  );
-};
+    <ThemeProviderContext.Provider {...props} value={value}>
+      {children}
+    </ThemeProviderContext.Provider>
+  )
+}
 
-export const useThemeContext = () => useContext(ThemeContext);
+export const useTheme = () => {
+  const context = useContext(ThemeProviderContext)
+
+  if (context === undefined)
+    throw new Error("useTheme must be used within a ThemeProvider")
+
+  return context
+}
