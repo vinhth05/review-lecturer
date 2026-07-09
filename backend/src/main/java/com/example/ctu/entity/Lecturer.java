@@ -1,4 +1,4 @@
-﻿package com.example.ctu.entity;
+package com.example.ctu.entity;
 
 import com.example.ctu.entity.enums.LecturerStatus;
 import jakarta.persistence.Column;

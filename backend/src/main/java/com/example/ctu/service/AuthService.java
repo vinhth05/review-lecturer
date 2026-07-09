@@ -214,6 +214,7 @@ public class AuthService {
         }
     }
 
+    @Transactional
     public AuthDtos.AuthResponse login(AuthDtos.LoginRequest request) {
         LOGGER.info("Login attempt for email: {}", request.email());
         User seedUser = authenticateSeedAccount(request.email(), request.password());

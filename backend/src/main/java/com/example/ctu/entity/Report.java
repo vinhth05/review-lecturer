@@ -1,4 +1,4 @@
-﻿package com.example.ctu.entity;
+package com.example.ctu.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
