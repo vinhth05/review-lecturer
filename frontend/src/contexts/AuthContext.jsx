@@ -35,9 +35,8 @@ export function AuthProvider({ children }) {
     login,
     logout,
     isAuthenticated: !!user,
-    isStudent: user?.role === 'student',
-    isLecturer: user?.role === 'lecturer',
-    isAdmin: user?.role === 'admin'
+    isStudent: user?.role === 'STUDENT',
+    isAdmin: user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
   }
 
   return (

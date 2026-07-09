@@ -32,6 +32,7 @@ import com.example.ctu.repository.SubjectRepository;
 import com.example.ctu.repository.UserRepository;
 
 @Service
+@Transactional(readOnly = true)
 @SuppressWarnings("null")
 public class AdminService {
 
@@ -328,6 +329,7 @@ public class AdminService {
         return lecturerRepository.save(lecturer);
     }
 
+    @Transactional(readOnly = true)
     public AdminDtos.AdminStatisticResponse statistics() {
         List<Lecturer> lecturers = lecturerRepository.findAll();
         List<com.example.ctu.entity.Review> approvedReviews = reviewRepository.findAll().stream()

@@ -10,6 +10,14 @@ import LecturerDetail from '@/pages/student/LecturerDetail';
 import SubmitReview from '@/pages/student/SubmitReview';
 import Profile from '@/pages/student/Profile';
 import AdminLayout from '@/layouts/AdminLayout';
+import AdminDashboard from '@/pages/admin/Dashboard';
+import AdminUsers from '@/pages/admin/Users';
+import AdminLecturers from '@/pages/admin/Lecturers';
+import AdminFaculties from '@/pages/admin/Faculties';
+import AdminSubjects from '@/pages/admin/Subjects';
+import AdminReviews from '@/pages/admin/Reviews';
+import AdminReports from '@/pages/admin/Reports';
+import AdminToxicKeywords from '@/pages/admin/ToxicKeywords';
 
 // We'll import pages here as we build them
 // For now, placeholder components
@@ -43,14 +51,14 @@ export default function AppRoutes() {
       
       {/* Admin Routes */}
       <Route path="/admin" element={isAuthenticated && isAdmin ? <AdminLayout /> : <Navigate to="/login" />}>
-        <Route index element={<Placeholder title="Admin Dashboard" />} />
-        <Route path="users" element={<Placeholder title="Users Management" />} />
-        <Route path="lecturers" element={<Placeholder title="Lecturers Management" />} />
-        <Route path="faculties" element={<Placeholder title="Faculties Management" />} />
-        <Route path="subjects" element={<Placeholder title="Subjects Management" />} />
-        <Route path="reviews" element={<Placeholder title="Reviews Moderation" />} />
-        <Route path="reports" element={<Placeholder title="Reports Management" />} />
-        <Route path="toxic-keywords" element={<Placeholder title="Toxic Keywords" />} />
+        <Route index element={<AdminDashboard />} />
+        <Route path="users" element={<AdminUsers />} />
+        <Route path="lecturers" element={<AdminLecturers />} />
+        <Route path="faculties" element={<AdminFaculties />} />
+        <Route path="subjects" element={<AdminSubjects />} />
+        <Route path="reviews" element={<AdminReviews />} />
+        <Route path="reports" element={<AdminReports />} />
+        <Route path="toxic-keywords" element={<AdminToxicKeywords />} />
       </Route>
       
       {/* Catch all */}

@@ -24,6 +24,7 @@ import com.example.ctu.repository.ReportRepository;
 import com.example.ctu.repository.ReviewRepository;
 
 @Service
+@Transactional(readOnly = true)
 @SuppressWarnings("null")
 public class ReviewService {
 

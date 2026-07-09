@@ -34,7 +34,7 @@ export default function Login() {
       toast.success("Login successful");
       
       // Redirect based on role
-      if (response.user.role === 'admin') navigate('/admin');
+      if (response.user.role === 'ADMIN' || response.user.role === 'SUPER_ADMIN') navigate('/admin');
       else navigate('/student');
     } catch (error) {
       toast.error(error.message || "Failed to login. Please check your credentials.");

@@ -1,0 +1,177 @@
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { adminApi } from '@/services/api/adminApi';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Search, Shield, Lock, Unlock, CheckCircle, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
+
+export default function Users() {
+  const queryClient = useQueryClient();
+  const [page, setPage] = useState(0);
+  const [keyword, setKeyword] = useState('');
+  const [role, setRole] = useState('ALL');
+  
+  const { data: response, isLoading } = useQuery({
+    queryKey: ['admin-users', page, keyword, role],
+    queryFn: () => adminApi.getUsers({ 
+      page, 
+      size: 10, 
+      keyword: keyword || undefined,
+      role: role === 'ALL' ? undefined : role
+    }),
+  });
+
+  const toggleLockMutation = useMutation({
+    mutationFn: ({ id, locked }) => locked ? adminApi.unlockUser(id) : adminApi.lockUser(id),
+    onSuccess: (data) => {
+      toast.success(`User ${data.locked ? 'locked' : 'unlocked'} successfully`);
+      queryClient.invalidateQueries(['admin-users']);
+    },
+    onError: (error) => toast.error(error.message || 'Failed to update user status')
+  });
+
+  const users = response?.content || [];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Users Management</h1>
+          <p className="text-muted-foreground">Manage student and admin accounts.</p>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="flex items-center gap-2 w-full md:w-1/2">
+              <div className="relative w-full">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, email, or student code..."
+                  className="pl-8"
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="w-full md:w-1/4">
+              <Select value={role} onValueChange={setRole}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filter by Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Roles</SelectItem>
+                  <SelectItem value="STUDENT">Student</SelectItem>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Faculty</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center h-24">Loading users...</TableCell>
+                  </TableRow>
+                ) : users.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">No users found.</TableCell>
+                  </TableRow>
+                ) : (
+                  users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{user.fullName}</span>
+                          <span className="text-xs text-muted-foreground">{user.email}</span>
+                          {user.studentCode && <span className="text-xs text-muted-foreground">ID: {user.studentCode}</span>}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={user.role === 'SUPER_ADMIN' ? 'destructive' : user.role === 'ADMIN' ? 'default' : 'secondary'}>
+                          {user.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          {user.verified ? (
+                            <Badge variant="outline" className="text-green-600 w-fit"><CheckCircle className="mr-1 h-3 w-3" /> Verified</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-yellow-600 w-fit"><XCircle className="mr-1 h-3 w-3" /> Unverified</Badge>
+                          )}
+                          {user.locked && (
+                            <Badge variant="destructive" className="w-fit"><Lock className="mr-1 h-3 w-3" /> Locked</Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">{user.facultyName || 'N/A'}</span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={user.role === 'SUPER_ADMIN'}
+                          onClick={() => toggleLockMutation.mutate({ id: user.id, locked: user.locked })}
+                        >
+                          {user.locked ? (
+                            <><Unlock className="mr-2 h-4 w-4" /> Unlock</>
+                          ) : (
+                            <><Lock className="mr-2 h-4 w-4 text-destructive" /> Lock</>
+                          )}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-sm text-muted-foreground">
+              Showing page {page + 1} of {response?.totalPages || 1}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                disabled={page === 0}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(p => p + 1)}
+                disabled={page >= (response?.totalPages || 1) - 1}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

@@ -19,7 +19,10 @@ import com.example.ctu.exception.ResourceNotFoundException;
 import com.example.ctu.repository.LecturerRepository;
 import com.example.ctu.repository.ReviewRepository;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
+@Transactional(readOnly = true)
 @SuppressWarnings("null")
 public class LecturerService {
 
