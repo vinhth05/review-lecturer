@@ -46,7 +46,7 @@ export default function Dashboard() {
   }
 
   const statCards = [
-    { title: 'Total Users', value: stats?.totalUsers || 0, icon: Users, color: 'text-blue-500' },
+    { title: 'Total Students', value: stats?.totalStudents || 0, icon: Users, color: 'text-blue-500' },
     { title: 'Total Lecturers', value: stats?.totalLecturers || 0, icon: GraduationCap, color: 'text-green-500' },
     { title: 'Total Faculties', value: stats?.totalFaculties || 0, icon: Building2, color: 'text-purple-500' },
     { title: 'Total Subjects', value: stats?.totalSubjects || 0, icon: BookOpen, color: 'text-orange-500' },

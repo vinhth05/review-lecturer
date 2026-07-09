@@ -50,8 +50,8 @@ export default function Register() {
         confirmPassword: data.confirmPassword,
         facultyId: parseInt(data.facultyId)
       });
-      toast.success("Registration successful! Please login.");
-      navigate('/login');
+      toast.success("Registration successful! Please check your email for the OTP.");
+      navigate('/verify', { state: { email: data.email } });
     } catch (error) {
       toast.error(error.message || "Failed to register. Please try again.");
     } finally {

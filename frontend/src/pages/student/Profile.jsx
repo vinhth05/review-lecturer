@@ -29,7 +29,7 @@ const passwordSchema = z.object({
 
 export default function Profile() {
   const queryClient = useQueryClient();
-  const { user, login } = useAuth();
+  const { user, updateUser } = useAuth();
   
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -63,8 +63,8 @@ export default function Profile() {
         fullName: data.fullName,
         facultyId: parseInt(data.facultyId)
       });
-      // Update local storage auth user
-      login(res, localStorage.getItem('access_token'));
+      // Update local storage auth user without erasing tokens
+      updateUser({ fullName: res.fullName, facultyName: res.facultyName });
       queryClient.invalidateQueries(['profile']);
       toast.success("Profile updated successfully");
     } catch (error) {

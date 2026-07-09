@@ -3,6 +3,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import Landing from '@/pages/public/Landing';
 import Login from '@/pages/public/Login';
 import Register from '@/pages/public/Register';
+import Verify from '@/pages/public/Verify';
+import ForgotPassword from '@/pages/public/ForgotPassword';
+import ResetPassword from '@/pages/public/ResetPassword';
 import StudentLayout from '@/layouts/StudentLayout';
 import Dashboard from '@/pages/student/Dashboard';
 import Lecturers from '@/pages/student/Lecturers';
@@ -36,6 +39,9 @@ export default function AppRoutes() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to={isAdmin ? "/admin" : "/student"} />} />
       <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to={isAdmin ? "/admin" : "/student"} />} />
+      <Route path="/verify" element={!isAuthenticated ? <Verify /> : <Navigate to={isAdmin ? "/admin" : "/student"} />} />
+      <Route path="/forgot-password" element={!isAuthenticated ? <ForgotPassword /> : <Navigate to={isAdmin ? "/admin" : "/student"} />} />
+      <Route path="/reset-password" element={!isAuthenticated ? <ResetPassword /> : <Navigate to={isAdmin ? "/admin" : "/student"} />} />
 
       {/* Student Routes */}
       <Route path="/student" element={isAuthenticated && isStudent ? <StudentLayout /> : <Navigate to="/login" />}>

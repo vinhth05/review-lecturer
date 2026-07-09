@@ -30,11 +30,12 @@ export default function Login() {
     try {
       setIsLoading(true);
       const response = await authApi.login(data);
-      login(response.user, response.accessToken);
+      // login context takes the full response object
+      login(response);
       toast.success("Login successful");
       
       // Redirect based on role
-      if (response.user.role === 'ADMIN' || response.user.role === 'SUPER_ADMIN') navigate('/admin');
+      if (response.role === 'ADMIN' || response.role === 'SUPER_ADMIN') navigate('/admin');
       else navigate('/student');
     } catch (error) {
       toast.error(error.message || "Failed to login. Please check your credentials.");
@@ -90,9 +91,7 @@ export default function Login() {
                   {...register('password')}
                   className={errors.password ? "border-destructive" : ""}
                 />
-                {errors.password && (
-                  <p className="text-sm text-destructive">{errors.password.message}</p>
-                )}
+                {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">

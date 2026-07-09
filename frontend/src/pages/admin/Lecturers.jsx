@@ -110,7 +110,7 @@ export default function Lecturers() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {lecturer.hidden ? (
+                        {lecturer.status === 'HIDDEN' ? (
                           <Badge variant="destructive">Hidden</Badge>
                         ) : (
                           <Badge variant="outline" className="text-green-600">Active</Badge>
@@ -120,9 +120,9 @@ export default function Lecturers() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => toggleHideMutation.mutate({ id: lecturer.id, hidden: lecturer.hidden })}
+                          onClick={() => toggleHideMutation.mutate({ id: lecturer.id, hidden: lecturer.status === 'ACTIVE' })}
                         >
-                          {lecturer.hidden ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                          {lecturer.status === 'HIDDEN' ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                         </Button>
                         <Button variant="ghost" size="icon">
                           <Edit className="h-4 w-4" />

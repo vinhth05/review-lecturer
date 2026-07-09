@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react"
+import { authApi } from "@/services/api/authApi"
 
 const AuthContext = createContext(null)
 
@@ -15,17 +16,35 @@ export function AuthProvider({ children }) {
       setUser(JSON.parse(storedUser))
     }
     setLoading(false)
+
+    const handleUnauthorized = () => {
+      logout();
+    };
+    window.addEventListener('unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('unauthorized', handleUnauthorized);
   }, [])
 
-  const login = (userData, token) => {
+  const login = (userData) => {
     setUser(userData)
-    localStorage.setItem("access_token", token)
+    if (userData.token) {
+      localStorage.setItem("access_token", userData.token)
+    }
+    if (userData.refreshToken) {
+      localStorage.setItem("refresh_token", userData.refreshToken)
+    }
     localStorage.setItem("user", JSON.stringify(userData))
+  }
+
+  const updateUser = (newUserData) => {
+    const updatedUser = { ...user, ...newUserData };
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
   }
 
   const logout = () => {
     setUser(null)
     localStorage.removeItem("access_token")
+    localStorage.removeItem("refresh_token")
     localStorage.removeItem("user")
   }
 
@@ -34,6 +53,7 @@ export function AuthProvider({ children }) {
     loading,
     login,
     logout,
+    updateUser,
     isAuthenticated: !!user,
     isStudent: user?.role === 'STUDENT',
     isAdmin: user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'

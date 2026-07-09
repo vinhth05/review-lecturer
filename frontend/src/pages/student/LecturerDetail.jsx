@@ -60,8 +60,8 @@ export default function LecturerDetail() {
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
               <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
-              <span className="text-2xl font-bold">{lecturer.averageRating.toFixed(1)}</span>
-              <span className="text-muted-foreground">({lecturer.reviewCount} reviews)</span>
+              <span className="text-2xl font-bold">{(lecturer.averageRating || 0).toFixed(1)}</span>
+              <span className="text-muted-foreground">({lecturer.reviewCount || 0} reviews)</span>
             </div>
           </div>
 
