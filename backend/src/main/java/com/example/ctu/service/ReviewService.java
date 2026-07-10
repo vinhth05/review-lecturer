@@ -66,6 +66,9 @@ public class ReviewService {
                 anonymousHash, request.lecturerId(), request.semester(), request.academicYear())) {
             throw new BadRequestException("Bạn đã review giảng viên này trong học kỳ/năm học này");
         }
+        if (reviewRepository.countByAnonymousHashAndLecturer_Id(anonymousHash, request.lecturerId()) >= 3) {
+            throw new BadRequestException("Bạn chỉ được đánh giá giảng viên này tối đa 3 lần");
+        }
         if (toxicFilterService.containsToxicWord(request.comment())) {
             throw new BadRequestException("Nội dung có từ khóa không phù hợp");
         }
@@ -133,6 +136,30 @@ public class ReviewService {
             throw new ForbiddenException("Tài khoản chưa được xác thực");
         }
         return user;
+    }
+
+    public List<ReviewDtos.MyReviewItem> getMyReviews() {
+        User user = currentUserService.requireCurrentUser();
+        String anonymousHash = hashService.anonymousHash(user.getStudentCode());
+        return reviewRepository.findByAnonymousHashOrderByCreatedAtDesc(anonymousHash).stream()
+                .map(review -> {
+                    double avg = (review.getRatingClarity() + review.getRatingFairness() + review.getRatingPressure() + review.getRatingWorkload() + review.getRatingSupport()) / 5.0;
+                    return new ReviewDtos.MyReviewItem(
+                            review.getId(),
+                            review.getLecturer().getId(),
+                            review.getLecturer().getFullName(),
+                            review.getRatingClarity(),
+                            review.getRatingFairness(),
+                            review.getRatingPressure(),
+                            review.getRatingWorkload(),
+                            review.getRatingSupport(),
+                            avg,
+                            review.getComment(),
+                            review.getSemester(),
+                            review.getAcademicYear(),
+                            review.getCreatedAt()
+                    );
+                }).toList();
     }
 
     private Instant startOfDay() {

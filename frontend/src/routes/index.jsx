@@ -12,6 +12,7 @@ import Lecturers from '@/pages/student/Lecturers';
 import LecturerDetail from '@/pages/student/LecturerDetail';
 import SubmitReview from '@/pages/student/SubmitReview';
 import Profile from '@/pages/student/Profile';
+import MyReviews from '@/pages/student/MyReviews';
 import AdminLayout from '@/layouts/AdminLayout';
 import AdminDashboard from '@/pages/admin/Dashboard';
 import AdminUsers from '@/pages/admin/Users';
@@ -50,7 +51,7 @@ export default function AppRoutes() {
         <Route path="lecturers/:id" element={<LecturerDetail />} />
         <Route path="lecturers/:id/review" element={<SubmitReview />} />
         <Route path="profile" element={<Profile />} />
-        <Route path="reviews" element={<Placeholder title="My Reviews" />} />
+        <Route path="reviews" element={<MyReviews />} />
         <Route path="favorites" element={<Placeholder title="Favorite Lecturers" />} />
         <Route path="settings" element={<Placeholder title="Settings" />} />
       </Route>

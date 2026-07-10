@@ -31,4 +31,21 @@ public final class ReviewDtos {
 
     public record ModerateReviewRequest(boolean approved) {
     }
+
+    public record MyReviewItem(
+            Long id,
+            Long lecturerId,
+            String lecturerName,
+            int ratingClarity,
+            int ratingFairness,
+            int ratingPressure,
+            int ratingWorkload,
+            int ratingSupport,
+            double averageRating,
+            String comment,
+            String semester,
+            String academicYear,
+            java.time.Instant createdAt
+    ) {
+    }
 }

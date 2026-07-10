@@ -26,12 +26,17 @@ public class ReviewController {
     }
 
     @PostMapping("/reviews")
-    public ResponseEntity<Review> submit(@Valid @RequestBody ReviewDtos.CreateReviewRequest request) {
-        return ResponseEntity.ok(reviewService.submit(request));
+    public ResponseEntity<Long> submit(@Valid @RequestBody ReviewDtos.CreateReviewRequest request) {
+        return ResponseEntity.ok(reviewService.submit(request).getId());
     }
 
     @PostMapping("/reports")
-    public ResponseEntity<Report> report(@Valid @RequestBody ReviewDtos.CreateReportRequest request) {
-        return ResponseEntity.ok(reviewService.report(request));
+    public ResponseEntity<Long> report(@Valid @RequestBody ReviewDtos.CreateReportRequest request) {
+        return ResponseEntity.ok(reviewService.report(request).getId());
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/reviews/me")
+    public ResponseEntity<java.util.List<ReviewDtos.MyReviewItem>> myReviews() {
+        return ResponseEntity.ok(reviewService.getMyReviews());
     }
 }

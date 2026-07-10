@@ -11,7 +11,9 @@ import com.example.ctu.entity.Review;
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findByLecturer_IdAndApprovedOrderByCreatedAtDesc(Long lecturerId, boolean approved);
     List<Review> findByApprovedFalseOrderByCreatedAtDesc();
+    List<Review> findByAnonymousHashOrderByCreatedAtDesc(String anonymousHash);
     long countByAnonymousHashAndCreatedAtBetween(String anonymousHash, Instant start, Instant end);
+    long countByAnonymousHashAndLecturer_Id(String anonymousHash, Long lecturerId);
     boolean existsByAnonymousHashAndLecturer_IdAndSemesterAndAcademicYear(String anonymousHash, Long lecturerId, String semester, String academicYear);
     List<Review> findByLecturer_IdOrderByCreatedAtDesc(Long lecturerId);
 

@@ -1,16 +1,24 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { BookOpen, Users, MessageSquare, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { reviewApi } from '@/services/api/reviewApi';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Dashboard() {
   const { user } = useAuth();
 
+  const { data: myReviews, isLoading: isLoadingReviews } = useQuery({
+    queryKey: ['myReviews'],
+    queryFn: () => reviewApi.getMyReviews()
+  });
+
   const stats = [
-    { title: 'Total Reviews', value: '12', icon: MessageSquare, color: 'text-blue-500' },
-    { title: 'Pending Approval', value: '3', icon: BookOpen, color: 'text-orange-500' },
-    { title: 'Favorite Lecturers', value: '5', icon: Star, color: 'text-yellow-500' },
-    { title: 'Total Lecturers', value: '142', icon: Users, color: 'text-green-500' },
+    { title: 'Total Reviews', value: myReviews ? myReviews.length : '...', icon: MessageSquare, color: 'text-blue-500' },
+    { title: 'Pending Approval', value: '...', icon: BookOpen, color: 'text-orange-500' },
+    { title: 'Favorite Lecturers', value: '...', icon: Star, color: 'text-yellow-500' },
+    { title: 'Total Lecturers', value: '...', icon: Users, color: 'text-green-500' },
   ];
 
   return (
@@ -46,12 +54,36 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>Recent Reviews</CardTitle>
+            <CardTitle>My Recent Reviews</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-sm text-muted-foreground">
-              Your recent review activities will appear here.
-            </div>
+            {isLoadingReviews ? (
+              <div className="space-y-4">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            ) : myReviews && myReviews.length > 0 ? (
+              <div className="space-y-4">
+                {myReviews.slice(0, 5).map(review => (
+                  <div key={review.id} className="flex flex-col space-y-1 border-b pb-4 last:border-0 last:pb-0">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{review.lecturerName}</span>
+                      <div className="flex items-center text-sm text-yellow-500">
+                        <Star className="h-3 w-3 fill-current mr-1" />
+                        <span>{review.averageRating.toFixed(1)}</span>
+                      </div>
+                    </div>
+                    <span className="text-xs text-muted-foreground">Semester {review.semester}, {review.academicYear}</span>
+                    <p className="text-sm text-foreground line-clamp-2 mt-1">{review.comment}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                You haven't written any reviews yet.
+              </div>
+            )}
           </CardContent>
         </Card>
         <Card className="col-span-3">
