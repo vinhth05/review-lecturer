@@ -96,16 +96,22 @@ export default function LecturerDetail() {
               <CardTitle>Rating Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Mock rating bars */}
               <div className="space-y-2">
-                {[5, 4, 3, 2, 1].map((star) => (
-                  <div key={star} className="flex items-center gap-4 text-sm">
-                    <span className="w-12">{star} Stars</span>
-                    <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
-                      <div className="h-full bg-yellow-500 rounded-full" style={{ width: `${Math.random() * 100}%` }} />
+                {[5, 4, 3, 2, 1].map((star) => {
+                  const dist = lecturer.distribution?.find(d => d.score === star);
+                  const count = dist ? dist.count : 0;
+                  const total = lecturer.reviewCount > 0 ? lecturer.reviewCount : 1;
+                  const percentage = (count / total) * 100;
+                  return (
+                    <div key={star} className="flex items-center gap-4 text-sm">
+                      <span className="w-16">{star} Stars</span>
+                      <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
+                        <div className="h-full bg-yellow-500 rounded-full" style={{ width: `${percentage}%` }} />
+                      </div>
+                      <span className="w-10 text-right text-muted-foreground">{count}</span>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -113,7 +119,36 @@ export default function LecturerDetail() {
         <TabsContent value="reviews" className="mt-6">
           <Card>
             <CardContent className="p-6">
-              <p className="text-muted-foreground">Reviews will appear here.</p>
+              {lecturer.latestReviews && lecturer.latestReviews.length > 0 ? (
+                <div className="space-y-6">
+                  {lecturer.latestReviews.map((review) => (
+                    <div key={review.id} className="border-b pb-6 last:border-0 last:pb-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                          <span className="font-bold">{review.averageRating.toFixed(1)}</span>
+                          <span className="text-sm text-muted-foreground ml-2">
+                            Semester {review.semester}, {review.academicYear}
+                          </span>
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-foreground whitespace-pre-wrap">{review.comment}</p>
+                      <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 text-xs text-muted-foreground">
+                        <div>Clarity: <span className="font-medium text-foreground">{review.ratingClarity}</span></div>
+                        <div>Fairness: <span className="font-medium text-foreground">{review.ratingFairness}</span></div>
+                        <div>Pressure: <span className="font-medium text-foreground">{review.ratingPressure}</span></div>
+                        <div>Workload: <span className="font-medium text-foreground">{review.ratingWorkload}</span></div>
+                        <div>Support: <span className="font-medium text-foreground">{review.ratingSupport}</span></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No reviews yet. Be the first to review!</p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

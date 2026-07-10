@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { lecturerApi } from '@/services/api/lecturerApi';
 import { metadataApi } from '@/services/api/metadataApi';
@@ -112,7 +113,9 @@ export default function Lecturers() {
                   </div>
                 </div>
                 <div className="mt-6">
-                  <Button variant="outline" className="w-full">View Profile</Button>
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link to={`/student/lecturers/${lecturer.id}`}>View Profile</Link>
+                  </Button>
                 </div>
               </CardContent>
             </Card>
