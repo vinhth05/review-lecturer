@@ -86,14 +86,14 @@ public class AdminController {
 
     @PatchMapping("/reviews/{id}/approve")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-    public ResponseEntity<Review> approveReview(@PathVariable Long id) {
-        return ResponseEntity.ok(reviewService.moderate(id, true));
+    public ResponseEntity<Long> approveReview(@PathVariable Long id) {
+        return ResponseEntity.ok(reviewService.moderate(id, true).getId());
     }
 
     @PatchMapping("/lecturers/{id}/hide")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-    public ResponseEntity<Lecturer> hideLecturer(@PathVariable Long id) {
-        return ResponseEntity.ok(adminService.hideLecturer(id));
+    public ResponseEntity<Long> hideLecturer(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.hideLecturer(id).getId());
     }
 
     @GetMapping("/statistics")
@@ -104,8 +104,8 @@ public class AdminController {
 
     @PostMapping("/faculties")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<Faculty> createFaculty(@Valid @RequestBody AdminDtos.CreateFacultyRequest request) {
-        return ResponseEntity.ok(adminService.createFaculty(request));
+    public ResponseEntity<Long> createFaculty(@Valid @RequestBody AdminDtos.CreateFacultyRequest request) {
+        return ResponseEntity.ok(adminService.createFaculty(request).getId());
     }
 
     @GetMapping("/faculties")
@@ -118,8 +118,8 @@ public class AdminController {
 
     @PatchMapping("/faculties/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<Faculty> updateFaculty(@PathVariable Long id, @Valid @RequestBody AdminDtos.UpdateFacultyRequest request) {
-        return ResponseEntity.ok(adminService.updateFaculty(id, request));
+    public ResponseEntity<Long> updateFaculty(@PathVariable Long id, @Valid @RequestBody AdminDtos.UpdateFacultyRequest request) {
+        return ResponseEntity.ok(adminService.updateFaculty(id, request).getId());
     }
 
     @DeleteMapping("/faculties/{id}")
@@ -131,8 +131,8 @@ public class AdminController {
 
     @PostMapping("/subjects")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<Subject> createSubject(@Valid @RequestBody AdminDtos.CreateSubjectRequest request) {
-        return ResponseEntity.ok(adminService.createSubject(request));
+    public ResponseEntity<Long> createSubject(@Valid @RequestBody AdminDtos.CreateSubjectRequest request) {
+        return ResponseEntity.ok(adminService.createSubject(request).getId());
     }
 
     @GetMapping("/subjects")
@@ -145,8 +145,8 @@ public class AdminController {
 
     @PatchMapping("/subjects/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<Subject> updateSubject(@PathVariable Long id, @Valid @RequestBody AdminDtos.UpdateSubjectRequest request) {
-        return ResponseEntity.ok(adminService.updateSubject(id, request));
+    public ResponseEntity<Long> updateSubject(@PathVariable Long id, @Valid @RequestBody AdminDtos.UpdateSubjectRequest request) {
+        return ResponseEntity.ok(adminService.updateSubject(id, request).getId());
     }
 
     @DeleteMapping("/subjects/{id}")
@@ -158,8 +158,8 @@ public class AdminController {
 
     @PostMapping("/lecturers")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<Lecturer> createLecturer(@Valid @RequestBody AdminDtos.CreateLecturerRequest request) {
-        return ResponseEntity.ok(adminService.createLecturer(request));
+    public ResponseEntity<Long> createLecturer(@Valid @RequestBody AdminDtos.CreateLecturerRequest request) {
+        return ResponseEntity.ok(adminService.createLecturer(request).getId());
     }
 
     @GetMapping("/lecturers")
@@ -172,8 +172,8 @@ public class AdminController {
 
     @PatchMapping("/lecturers/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<Lecturer> updateLecturer(@PathVariable Long id, @Valid @RequestBody AdminDtos.UpdateLecturerRequest request) {
-        return ResponseEntity.ok(adminService.updateLecturer(id, request));
+    public ResponseEntity<Long> updateLecturer(@PathVariable Long id, @Valid @RequestBody AdminDtos.UpdateLecturerRequest request) {
+        return ResponseEntity.ok(adminService.updateLecturer(id, request).getId());
     }
 
     @DeleteMapping("/lecturers/{id}")
@@ -249,8 +249,8 @@ public class AdminController {
 
     @PatchMapping("/reviews/{id}/reject")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-    public ResponseEntity<Review> rejectReview(@PathVariable Long id) {
-        return ResponseEntity.ok(reviewService.moderate(id, false));
+    public ResponseEntity<Long> rejectReview(@PathVariable Long id) {
+        return ResponseEntity.ok(reviewService.moderate(id, false).getId());
     }
 
     @DeleteMapping("/reviews/{id}")
@@ -276,8 +276,8 @@ public class AdminController {
 
     @PatchMapping("/lecturers/{id}/unhide")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<Lecturer> unhideLecturer(@PathVariable Long id) {
-        return ResponseEntity.ok(adminService.unhideLecturer(id));
+    public ResponseEntity<Long> unhideLecturer(@PathVariable Long id) {
+        return ResponseEntity.ok(adminService.unhideLecturer(id).getId());
     }
 
     @PatchMapping("/users/{id}/verified")

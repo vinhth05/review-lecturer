@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Search, Shield, Lock, Unlock, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Shield, Lock, Unlock, CheckCircle, XCircle, Edit, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Users() {
@@ -16,6 +17,11 @@ export default function Users() {
   const [keyword, setKeyword] = useState('');
   const [role, setRole] = useState('ALL');
   
+  // Modal states
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedRole, setSelectedRole] = useState('STUDENT');
+
   const { data: response, isLoading } = useQuery({
     queryKey: ['admin-users', page, keyword, role],
     queryFn: () => adminApi.getUsers({ 
@@ -34,6 +40,23 @@ export default function Users() {
     },
     onError: (error) => toast.error(error.message || 'Failed to update user status')
   });
+
+  const updateRoleMutation = useMutation({
+    mutationFn: ({ id, role }) => adminApi.updateUserRole(id, { role }),
+    onSuccess: () => {
+      toast.success('User role updated successfully');
+      queryClient.invalidateQueries(['admin-users']);
+      setIsEditOpen(false);
+      setSelectedUser(null);
+    },
+    onError: (error) => toast.error(error.message || 'Failed to update user role')
+  });
+
+  const openEditModal = (user) => {
+    setSelectedUser(user);
+    setSelectedRole(user.role);
+    setIsEditOpen(true);
+  };
 
   const users = response?.content || [];
 
@@ -126,7 +149,15 @@ export default function Users() {
                       <TableCell>
                         <span className="text-sm">{user.facultyName || 'N/A'}</span>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={user.role === 'SUPER_ADMIN'}
+                          onClick={() => openEditModal(user)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -172,6 +203,43 @@ export default function Users() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Role Modal */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User Role</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Update role for <span className="font-medium text-foreground">{selectedUser?.email}</span>
+              </p>
+              <label className="text-sm font-medium">Role</label>
+              <Select value={selectedRole} onValueChange={setSelectedRole}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="STUDENT">Student</SelectItem>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
+              <Button 
+                type="button" 
+                onClick={() => updateRoleMutation.mutate({ id: selectedUser?.id, role: selectedRole })}
+                disabled={updateRoleMutation.isPending || selectedRole === selectedUser?.role}
+              >
+                {updateRoleMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

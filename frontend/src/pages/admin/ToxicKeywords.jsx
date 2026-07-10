@@ -1,17 +1,33 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { adminApi } from '@/services/api/adminApi';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Trash2, FileWarning } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Plus, Edit, Trash2, FileWarning, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+
+const keywordSchema = z.object({
+  keyword: z.string().min(1, 'Keyword is required').max(100, 'Max 100 characters'),
+});
 
 export default function ToxicKeywords() {
   const queryClient = useQueryClient();
   const [newKeyword, setNewKeyword] = useState('');
   
+  // Edit modal states
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedKeyword, setSelectedKeyword] = useState(null);
+
+  const { register: registerEdit, handleSubmit: handleEditSubmit, reset: resetEdit, formState: { errors: editErrors } } = useForm({
+    resolver: zodResolver(keywordSchema)
+  });
+
   const { data: keywords, isLoading } = useQuery({
     queryKey: ['admin-toxic-keywords'],
     queryFn: () => adminApi.getToxicKeywords(),
@@ -27,6 +43,17 @@ export default function ToxicKeywords() {
     onError: (error) => toast.error(error.message || 'Failed to add keyword')
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => adminApi.updateToxicKeyword(id, data),
+    onSuccess: () => {
+      toast.success('Toxic keyword updated');
+      queryClient.invalidateQueries(['admin-toxic-keywords']);
+      setIsEditOpen(false);
+      setSelectedKeyword(null);
+    },
+    onError: (error) => toast.error(error.message || 'Failed to update keyword')
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id) => adminApi.deleteToxicKeyword(id),
     onSuccess: () => {
@@ -40,6 +67,12 @@ export default function ToxicKeywords() {
     e.preventDefault();
     if (!newKeyword.trim()) return;
     addMutation.mutate({ keyword: newKeyword.trim() });
+  };
+
+  const openEditModal = (item) => {
+    setSelectedKeyword(item);
+    resetEdit({ keyword: item.keyword });
+    setIsEditOpen(true);
   };
 
   const list = keywords || [];
@@ -63,7 +96,7 @@ export default function ToxicKeywords() {
               disabled={addMutation.isPending}
             />
             <Button type="submit" disabled={addMutation.isPending || !newKeyword.trim()}>
-              <Plus className="h-4 w-4 mr-2" /> Add
+              {addMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />} Add
             </Button>
           </form>
 
@@ -97,6 +130,14 @@ export default function ToxicKeywords() {
                         <Button 
                           variant="ghost" 
                           size="icon" 
+                          className="text-muted-foreground hover:text-foreground"
+                          onClick={() => openEditModal(item)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
                           className="text-muted-foreground hover:text-destructive"
                           onClick={() => {
                             if (window.confirm('Delete this toxic keyword?')) {
@@ -115,6 +156,29 @@ export default function ToxicKeywords() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Modal */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Toxic Keyword</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit((data) => updateMutation.mutate({ id: selectedKeyword?.id, data }))} className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Keyword</label>
+              <Input {...registerEdit('keyword')} className={editErrors.keyword ? 'border-destructive' : ''} />
+              {editErrors.keyword && <p className="text-sm text-destructive">{editErrors.keyword.message}</p>}
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={updateMutation.isPending}>
+                {updateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
