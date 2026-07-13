@@ -13,7 +13,7 @@ import com.example.ctu.otp.dto.OtpVerifyResponse;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 public class OtpController {
 
     private final OtpService otpService;
