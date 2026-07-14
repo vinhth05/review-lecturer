@@ -1,5 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react"
-import { authApi } from "@/services/api/authApi"
+import { createContext, useContext, useMemo, useState, useEffect } from "react"
 
 const AuthContext = createContext(null)
 
@@ -48,7 +47,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("user")
   }
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     loading,
     login,
@@ -57,7 +56,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!user,
     isStudent: user?.role === 'STUDENT',
     isAdmin: user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
-  }
+  }), [loading, user])
 
   return (
     <AuthContext.Provider value={value}>
