@@ -61,23 +61,23 @@ export default function Users() {
   const users = response?.content || [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Users Management</h1>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-extrabold tracking-tight text-gradient">Users Management</h1>
           <p className="text-muted-foreground">Manage student and admin accounts.</p>
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="glass-card overflow-hidden border-t-4 border-t-blue-500/50">
+        <CardHeader className="bg-card/50 pb-4 border-b">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="flex items-center gap-2 w-full md:w-1/2">
               <div className="relative w-full">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by name, email, or student code..."
-                  className="pl-8"
+                  className="pl-9 bg-background/50 border-border/50 focus-visible:ring-blue-500/50 transition-all rounded-xl"
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
                 />
@@ -85,10 +85,10 @@ export default function Users() {
             </div>
             <div className="w-full md:w-1/4">
               <Select value={role} onValueChange={setRole}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-background/50 border-border/50 rounded-xl">
                   <SelectValue placeholder="Filter by Role" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="glass-panel">
                   <SelectItem value="ALL">All Roles</SelectItem>
                   <SelectItem value="STUDENT">Student</SelectItem>
                   <SelectItem value="ADMIN">Admin</SelectItem>
@@ -98,16 +98,16 @@ export default function Users() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
+        <CardContent className="p-0 sm:p-6 sm:pt-6">
+          <div className="rounded-xl border bg-card/50 shadow-sm overflow-hidden border-t-0 sm:border-t">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Faculty</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+              <TableHeader className="bg-muted/50">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="font-semibold">User</TableHead>
+                  <TableHead className="font-semibold">Role</TableHead>
+                  <TableHead className="font-semibold">Status</TableHead>
+                  <TableHead className="font-semibold">Faculty</TableHead>
+                  <TableHead className="text-right font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -121,7 +121,7 @@ export default function Users() {
                   </TableRow>
                 ) : (
                   users.map((user) => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user.id} className="group hover:bg-blue-500/5 transition-colors">
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium">{user.fullName}</span>
@@ -206,11 +206,11 @@ export default function Users() {
 
       {/* Edit Role Modal */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px] glass-panel border-border/50">
           <DialogHeader>
-            <DialogTitle>Edit User Role</DialogTitle>
+            <DialogTitle className="text-xl text-gradient">Edit User Role</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 mt-4">
+          <div className="space-y-5 mt-4">
             <div>
               <p className="text-sm text-muted-foreground mb-4">
                 Update role for <span className="font-medium text-foreground">{selectedUser?.email}</span>

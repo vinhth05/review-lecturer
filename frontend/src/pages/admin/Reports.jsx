@@ -38,25 +38,25 @@ export default function Reports() {
   const reports = response?.content || [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Reports Management</h1>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-extrabold tracking-tight text-gradient">Reports Management</h1>
           <p className="text-muted-foreground">Manage user reports on reviews.</p>
         </div>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="rounded-md border">
+      <Card className="glass-card overflow-hidden border-t-4 border-t-destructive/50">
+        <CardContent className="pt-6 p-0 sm:p-6">
+          <div className="rounded-xl border bg-card/50 shadow-sm overflow-hidden">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Reporter</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Reported Review</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+              <TableHeader className="bg-muted/50">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="font-semibold">Reporter</TableHead>
+                  <TableHead className="font-semibold">Reason</TableHead>
+                  <TableHead className="font-semibold">Reported Review</TableHead>
+                  <TableHead className="font-semibold">Status</TableHead>
+                  <TableHead className="text-right font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -75,7 +75,7 @@ export default function Reports() {
                   </TableRow>
                 ) : (
                   reports.map((report) => (
-                    <TableRow key={report.id}>
+                    <TableRow key={report.id} className="group hover:bg-destructive/5 transition-colors">
                       <TableCell className="font-medium">
                         {report.reporterName}
                         <div className="text-xs text-muted-foreground">{report.reporterEmail}</div>
@@ -109,7 +109,7 @@ export default function Reports() {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="text-muted-foreground"
+                          className="text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
                           onClick={() => {
                             if (window.confirm('Dismiss this report?')) {
                               deleteReportMutation.mutate(report.id);

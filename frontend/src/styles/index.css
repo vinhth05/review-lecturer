@@ -13,45 +13,45 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 221.2 83.2% 53.3%; /* #2563EB */
+    --primary: 250 84% 54%; /* Vibrant Indigo/Purple */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 222.2 47.4% 11.2%; /* #0F172A */
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 217.2 91.2% 59.8%; /* #3B82F6 */
+    --accent: 250 84% 54%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84.2% 60.2%; /* #EF4444 */
+    --destructive: 348 83% 47%; /* Vibrant Red */
     --destructive-foreground: 210 40% 98%;
 
-    --success: 142.1 70.6% 45.3%; /* #22C55E */
+    --success: 142.1 76% 36%; /* Vibrant Green */
     --success-foreground: 210 40% 98%;
 
-    --warning: 37.7 93.3% 50.2%; /* #F59E0B */
+    --warning: 37.7 93.3% 50.2%; /* Vibrant Amber */
     --warning-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --ring: 250 84% 54%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 222.2 84% 4.9%; /* Deep Dark Blue/Black */
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 222.2 47.4% 11.2%; /* Slightly lighter dark for cards */
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 222.2 47.4% 11.2%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217.2 91.2% 59.8%;
+    --primary: 250 84% 64%; /* Lighter Vibrant Indigo */
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -60,10 +60,10 @@
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 91.2% 59.8%;
+    --accent: 250 84% 64%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 348 83% 57%;
     --destructive-foreground: 210 40% 98%;
 
     --success: 142.1 70.6% 45.3%;
@@ -74,7 +74,7 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --ring: 250 84% 64%;
   }
 }
 
@@ -83,7 +83,26 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground bg-fixed;
     font-feature-settings: "rlig" 1, "calt" 1;
+    background-image: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05), transparent 40%),
+                      radial-gradient(circle at bottom left, rgba(236, 72, 153, 0.03), transparent 40%);
+  }
+  
+  .dark body {
+    background-image: radial-gradient(circle at top right, rgba(99, 102, 241, 0.15), transparent 40%),
+                      radial-gradient(circle at bottom left, rgba(236, 72, 153, 0.1), transparent 40%);
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-background/60 backdrop-blur-xl border border-border/50 shadow-sm dark:shadow-none;
+  }
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-md border border-border/50 shadow-sm hover:shadow-md transition-all duration-300;
+  }
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500;
   }
 }
