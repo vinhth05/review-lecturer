@@ -79,26 +79,26 @@ export default function Faculties() {
   const faculties = response?.content || [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Faculties Management</h1>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-extrabold tracking-tight text-gradient">Faculties Management</h1>
           <p className="text-muted-foreground">Manage university faculties.</p>
         </div>
-        <Button className="w-full sm:w-auto" onClick={() => setIsAddOpen(true)}>
+        <Button className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all" onClick={() => setIsAddOpen(true)}>
           <Plus className="mr-2 h-4 w-4" /> Add Faculty
         </Button>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="rounded-md border">
+      <Card className="glass-card overflow-hidden border-t-4 border-t-purple-500/50">
+        <CardContent className="pt-6 p-0 sm:p-6">
+          <div className="rounded-xl border bg-card/50 shadow-sm overflow-hidden">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+              <TableHeader className="bg-muted/50">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="font-semibold">Code</TableHead>
+                  <TableHead className="font-semibold">Name</TableHead>
+                  <TableHead className="text-right font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -112,7 +112,7 @@ export default function Faculties() {
                   </TableRow>
                 ) : (
                   faculties.map((faculty) => (
-                    <TableRow key={faculty.id}>
+                    <TableRow key={faculty.id} className="group hover:bg-purple-500/5 transition-colors">
                       <TableCell className="font-medium">{faculty.code}</TableCell>
                       <TableCell>{faculty.name}</TableCell>
                       <TableCell className="text-right space-x-2">
@@ -167,11 +167,11 @@ export default function Faculties() {
 
       {/* Add Modal */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px] glass-panel border-border/50">
           <DialogHeader>
-            <DialogTitle>Add New Faculty</DialogTitle>
+            <DialogTitle className="text-xl text-gradient">Add New Faculty</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleAddSubmit((data) => createMutation.mutate(data))} className="space-y-4 mt-4">
+          <form onSubmit={handleAddSubmit((data) => createMutation.mutate(data))} className="space-y-5 mt-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Faculty Code</label>
               <Input {...registerAdd('code')} placeholder="e.g. DI" className={addErrors.code ? 'border-destructive' : ''} />
@@ -195,11 +195,11 @@ export default function Faculties() {
 
       {/* Edit Modal */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px] glass-panel border-border/50">
           <DialogHeader>
-            <DialogTitle>Edit Faculty</DialogTitle>
+            <DialogTitle className="text-xl text-gradient">Edit Faculty</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleEditSubmit((data) => updateMutation.mutate({ id: selectedFaculty?.id, data }))} className="space-y-4 mt-4">
+          <form onSubmit={handleEditSubmit((data) => updateMutation.mutate({ id: selectedFaculty?.id, data }))} className="space-y-5 mt-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Faculty Code</label>
               <Input {...registerEdit('code')} className={editErrors.code ? 'border-destructive' : ''} />

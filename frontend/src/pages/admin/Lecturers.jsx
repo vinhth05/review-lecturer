@@ -124,41 +124,41 @@ export default function Lecturers() {
   const lecturers = response?.content || [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Lecturers Management</h1>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-extrabold tracking-tight text-gradient">Lecturers Management</h1>
           <p className="text-muted-foreground">Manage and moderate university lecturers.</p>
         </div>
-        <Button className="w-full sm:w-auto" onClick={() => setIsAddOpen(true)}>
+        <Button className="w-full sm:w-auto shadow-md hover:shadow-lg transition-all" onClick={() => setIsAddOpen(true)}>
           <Plus className="mr-2 h-4 w-4" /> Add Lecturer
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="glass-card overflow-hidden border-t-4 border-t-emerald-500/50">
+        <CardHeader className="bg-card/50 pb-4 border-b">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="relative w-full md:w-1/2">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search lecturers..."
-                className="pl-8"
+                className="pl-9 bg-background/50 border-border/50 focus-visible:ring-emerald-500/50 transition-all rounded-xl"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
               />
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
+        <CardContent className="p-0 sm:p-6 sm:pt-6">
+          <div className="rounded-xl border bg-card/50 shadow-sm overflow-hidden border-t-0 sm:border-t">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Lecturer</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Rating</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+              <TableHeader className="bg-muted/50">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="font-semibold">Lecturer</TableHead>
+                  <TableHead className="font-semibold">Code</TableHead>
+                  <TableHead className="font-semibold">Rating</TableHead>
+                  <TableHead className="font-semibold">Status</TableHead>
+                  <TableHead className="text-right font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -172,7 +172,7 @@ export default function Lecturers() {
                   </TableRow>
                 ) : (
                   lecturers.map((lecturer) => (
-                    <TableRow key={lecturer.id}>
+                    <TableRow key={lecturer.id} className="group hover:bg-emerald-500/5 transition-colors">
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium">{lecturer.fullName}</span>
@@ -256,11 +256,11 @@ export default function Lecturers() {
 
       {/* Add Modal */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px] glass-panel border-border/50">
           <DialogHeader>
-            <DialogTitle>Add New Lecturer</DialogTitle>
+            <DialogTitle className="text-xl text-gradient">Add New Lecturer</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleAddSubmit((data) => createMutation.mutate(data))} className="space-y-4 mt-4">
+          <form onSubmit={handleAddSubmit((data) => createMutation.mutate(data))} className="space-y-5 mt-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Lecturer Code</label>
               <Input {...registerAdd('lecturerCode')} placeholder="e.g. GV001" className={addErrors.lecturerCode ? 'border-destructive' : ''} />
@@ -314,11 +314,11 @@ export default function Lecturers() {
 
       {/* Edit Modal */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px] glass-panel border-border/50">
           <DialogHeader>
-            <DialogTitle>Edit Lecturer</DialogTitle>
+            <DialogTitle className="text-xl text-gradient">Edit Lecturer</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleEditSubmit((data) => updateMutation.mutate({ id: selectedLecturer?.id, data }))} className="space-y-4 mt-4">
+          <form onSubmit={handleEditSubmit((data) => updateMutation.mutate({ id: selectedLecturer?.id, data }))} className="space-y-5 mt-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Lecturer Code</label>
               <Input {...registerEdit('lecturerCode')} className={editErrors.lecturerCode ? 'border-destructive' : ''} />

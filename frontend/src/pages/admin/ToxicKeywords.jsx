@@ -78,34 +78,35 @@ export default function ToxicKeywords() {
   const list = keywords || [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Toxic Keywords</h1>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-extrabold tracking-tight text-gradient">Toxic Keywords</h1>
           <p className="text-muted-foreground">Manage words that trigger automatic review rejection.</p>
         </div>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <form onSubmit={handleAdd} className="flex gap-2 mb-6 max-w-md">
+      <Card className="glass-card overflow-hidden border-t-4 border-t-rose-600/50">
+        <CardContent className="pt-6 p-0 sm:p-6">
+          <form onSubmit={handleAdd} className="flex gap-2 mb-6 max-w-md p-4 sm:p-0">
             <Input 
               placeholder="Enter new toxic keyword..." 
               value={newKeyword}
               onChange={(e) => setNewKeyword(e.target.value)}
               disabled={addMutation.isPending}
+              className="bg-background/50 border-border/50 focus-visible:ring-rose-500/50 transition-all rounded-xl"
             />
-            <Button type="submit" disabled={addMutation.isPending || !newKeyword.trim()}>
+            <Button type="submit" disabled={addMutation.isPending || !newKeyword.trim()} className="shadow-md hover:shadow-lg transition-all rounded-xl">
               {addMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />} Add
             </Button>
           </form>
 
-          <div className="rounded-md border">
+          <div className="rounded-xl border bg-card/50 shadow-sm overflow-hidden border-t-0 sm:border-t">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Keyword</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+              <TableHeader className="bg-muted/50">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="font-semibold">Keyword</TableHead>
+                  <TableHead className="text-right font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -124,7 +125,7 @@ export default function ToxicKeywords() {
                   </TableRow>
                 ) : (
                   list.map((item) => (
-                    <TableRow key={item.id}>
+                    <TableRow key={item.id} className="group hover:bg-rose-500/5 transition-colors">
                       <TableCell className="font-medium text-destructive">{item.keyword}</TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button 
@@ -159,11 +160,11 @@ export default function ToxicKeywords() {
 
       {/* Edit Modal */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px] glass-panel border-border/50">
           <DialogHeader>
-            <DialogTitle>Edit Toxic Keyword</DialogTitle>
+            <DialogTitle className="text-xl text-gradient">Edit Toxic Keyword</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleEditSubmit((data) => updateMutation.mutate({ id: selectedKeyword?.id, data }))} className="space-y-4 mt-4">
+          <form onSubmit={handleEditSubmit((data) => updateMutation.mutate({ id: selectedKeyword?.id, data }))} className="space-y-5 mt-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Keyword</label>
               <Input {...registerEdit('keyword')} className={editErrors.keyword ? 'border-destructive' : ''} />
