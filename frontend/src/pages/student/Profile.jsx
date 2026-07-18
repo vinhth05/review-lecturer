@@ -10,8 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Loader2, User } from 'lucide-react';
+import { Loader2, User, Camera, ShieldCheck, Clock, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { motion } from 'framer-motion';
 
 const profileSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -87,104 +88,151 @@ export default function Profile() {
     }
   };
 
-  if (isLoading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin h-8 w-8" /></div>;
+  if (isLoading) return (
+    <div className="flex flex-col justify-center items-center h-64 space-y-4">
+      <Loader2 className="animate-spin h-10 w-10 text-primary" />
+      <p className="text-muted-foreground font-medium animate-pulse">Loading profile...</p>
+    </div>
+  );
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Account Settings</h2>
-        <p className="text-muted-foreground">Manage your profile and security preferences.</p>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="max-w-5xl mx-auto space-y-8 pb-12"
+    >
+      <div className="flex flex-col gap-2">
+        <h2 className="text-3xl font-extrabold tracking-tight">Account Settings</h2>
+        <p className="text-muted-foreground text-lg">Manage your profile information and security preferences.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-1">
-          <Card>
-            <CardContent className="p-6 flex flex-col items-center text-center">
-              <div className="h-24 w-24 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-3xl mb-4">
-                {profile?.fullName?.charAt(0) || <User size={40} />}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-1 space-y-6">
+          <Card className="rounded-2xl border-border/50 shadow-sm overflow-hidden relative">
+            <div className="h-24 bg-gradient-to-r from-primary/80 to-primary/40"></div>
+            <CardContent className="p-6 flex flex-col items-center text-center -mt-12 relative z-10">
+              <div className="relative group cursor-pointer">
+                <div className="h-28 w-28 rounded-full bg-card flex items-center justify-center border-4 border-background shadow-lg overflow-hidden relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5"></div>
+                  <span className="font-extrabold text-4xl text-primary relative z-10">
+                    {profile?.fullName?.charAt(0) || <User size={48} />}
+                  </span>
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                    <Camera className="text-white h-8 w-8" />
+                  </div>
+                </div>
               </div>
-              <h3 className="font-semibold text-lg">{profile?.fullName}</h3>
-              <p className="text-sm text-muted-foreground mb-1">{profile?.studentCode}</p>
-              <p className="text-sm text-muted-foreground">{profile?.email}</p>
+              <h3 className="font-bold text-xl mt-4 text-foreground">{profile?.fullName}</h3>
+              <p className="text-primary font-medium mt-1">{profile?.studentCode}</p>
+              <p className="text-sm text-muted-foreground mt-1">{profile?.email}</p>
               
-              <div className="mt-6 w-full flex items-center justify-between text-sm border-t pt-4">
-                <span className="text-muted-foreground">Account Status</span>
-                <span className={`font-medium ${profile?.verified ? 'text-green-500' : 'text-orange-500'}`}>
-                  {profile?.verified ? 'Verified' : 'Pending'}
-                </span>
+              <div className="mt-8 w-full space-y-3">
+                <div className="flex items-center justify-between text-sm p-3 bg-secondary/30 rounded-xl border border-border/50">
+                  <span className="text-muted-foreground flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> Status</span>
+                  <span className={`font-semibold flex items-center gap-1.5 ${profile?.verified ? 'text-green-500' : 'text-orange-500'}`}>
+                    {profile?.verified ? <><CheckCircle2 className="h-4 w-4" /> Verified</> : <><Clock className="h-4 w-4" /> Pending</>}
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="md:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-              <CardDescription>Update your basic profile details.</CardDescription>
+        <div className="lg:col-span-2 space-y-8">
+          <Card className="rounded-2xl border-border/50 shadow-sm">
+            <CardHeader className="bg-secondary/10 border-b border-border/50 pb-6">
+              <CardTitle className="text-xl">Personal Information</CardTitle>
+              <CardDescription className="text-sm">Update your basic profile details.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit(onUpdateProfile)} className="space-y-4">
+            <CardContent className="pt-6">
+              <form onSubmit={handleSubmit(onUpdateProfile)} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Full Name</label>
-                  <Input {...register('fullName')} className={errors.fullName ? "border-destructive" : ""} />
-                  {errors.fullName && <p className="text-sm text-destructive">{errors.fullName.message}</p>}
+                  <label className="text-sm font-semibold text-foreground">Full Name</label>
+                  <Input 
+                    {...register('fullName')} 
+                    className={`h-12 rounded-xl transition-all ${errors.fullName ? "border-destructive focus-visible:ring-destructive/20" : "hover:border-primary focus-visible:ring-primary/20"}`} 
+                  />
+                  {errors.fullName && <p className="text-sm text-destructive font-medium">{errors.fullName.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Faculty</label>
+                  <label className="text-sm font-semibold text-foreground">Faculty</label>
                   <Select onValueChange={(value) => setValue('facultyId', value, { shouldValidate: true })} value={profile ? faculties?.find(f => f.name === profile.facultyName)?.id?.toString() : undefined}>
-                    <SelectTrigger className={errors.facultyId ? "border-destructive" : ""}>
+                    <SelectTrigger className={`h-12 rounded-xl transition-all ${errors.facultyId ? "border-destructive focus:ring-destructive/20" : "hover:border-primary focus:ring-primary/20"}`}>
                       <SelectValue placeholder="Select faculty" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-xl">
                       {faculties?.map(f => (
                         <SelectItem key={f.id} value={f.id.toString()}>{f.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.facultyId && <p className="text-sm text-destructive">{errors.facultyId.message}</p>}
+                  {errors.facultyId && <p className="text-sm text-destructive font-medium">{errors.facultyId.message}</p>}
                 </div>
-                <Button type="submit" disabled={isUpdatingProfile}>
-                  {isUpdatingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Save Changes
-                </Button>
+                <div className="pt-2 flex justify-end">
+                  <Button type="submit" disabled={isUpdatingProfile} className="rounded-xl h-12 px-8 font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all">
+                    {isUpdatingProfile ? (
+                      <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Saving Changes...</>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Change Password</CardTitle>
-              <CardDescription>Update your account security password.</CardDescription>
+          <Card className="rounded-2xl border-border/50 shadow-sm">
+            <CardHeader className="bg-secondary/10 border-b border-border/50 pb-6">
+              <CardTitle className="text-xl">Change Password</CardTitle>
+              <CardDescription className="text-sm">Update your account security password.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handlePasswordSubmit(onChangePassword)} className="space-y-4">
+            <CardContent className="pt-6">
+              <form onSubmit={handlePasswordSubmit(onChangePassword)} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Current Password</label>
-                  <Input type="password" {...registerPassword('currentPassword')} className={passwordErrors.currentPassword ? "border-destructive" : ""} />
-                  {passwordErrors.currentPassword && <p className="text-sm text-destructive">{passwordErrors.currentPassword.message}</p>}
+                  <label className="text-sm font-semibold text-foreground">Current Password</label>
+                  <Input 
+                    type="password" 
+                    {...registerPassword('currentPassword')} 
+                    className={`h-12 rounded-xl transition-all ${passwordErrors.currentPassword ? "border-destructive focus-visible:ring-destructive/20" : "hover:border-primary focus-visible:ring-primary/20"}`} 
+                  />
+                  {passwordErrors.currentPassword && <p className="text-sm text-destructive font-medium">{passwordErrors.currentPassword.message}</p>}
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">New Password</label>
-                    <Input type="password" {...registerPassword('newPassword')} className={passwordErrors.newPassword ? "border-destructive" : ""} />
-                    {passwordErrors.newPassword && <p className="text-sm text-destructive">{passwordErrors.newPassword.message}</p>}
+                    <label className="text-sm font-semibold text-foreground">New Password</label>
+                    <Input 
+                      type="password" 
+                      {...registerPassword('newPassword')} 
+                      className={`h-12 rounded-xl transition-all ${passwordErrors.newPassword ? "border-destructive focus-visible:ring-destructive/20" : "hover:border-primary focus-visible:ring-primary/20"}`} 
+                    />
+                    {passwordErrors.newPassword && <p className="text-sm text-destructive font-medium">{passwordErrors.newPassword.message}</p>}
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Confirm Password</label>
-                    <Input type="password" {...registerPassword('confirmPassword')} className={passwordErrors.confirmPassword ? "border-destructive" : ""} />
-                    {passwordErrors.confirmPassword && <p className="text-sm text-destructive">{passwordErrors.confirmPassword.message}</p>}
+                    <label className="text-sm font-semibold text-foreground">Confirm Password</label>
+                    <Input 
+                      type="password" 
+                      {...registerPassword('confirmPassword')} 
+                      className={`h-12 rounded-xl transition-all ${passwordErrors.confirmPassword ? "border-destructive focus-visible:ring-destructive/20" : "hover:border-primary focus-visible:ring-primary/20"}`} 
+                    />
+                    {passwordErrors.confirmPassword && <p className="text-sm text-destructive font-medium">{passwordErrors.confirmPassword.message}</p>}
                   </div>
                 </div>
-                <Button type="submit" variant="secondary" disabled={isChangingPassword}>
-                  {isChangingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Update Password
-                </Button>
+
+                <div className="pt-2 flex justify-end">
+                  <Button type="submit" variant="secondary" disabled={isChangingPassword} className="rounded-xl h-12 px-8 font-semibold border border-border/50 hover:bg-secondary/80 transition-all">
+                    {isChangingPassword ? (
+                      <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Updating...</>
+                    ) : (
+                      'Update Password'
+                    )}
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
