@@ -187,8 +187,10 @@ public final class AdminDtos {
         private final String subjectName;
         private final LecturerStatus status;
         private final Instant createdAt;
+        private final double averageRating;
+        private final long reviewCount;
 
-        public LecturerItem(Long id, String lecturerCode, String fullName, Long facultyId, String facultyName, Long subjectId, String subjectName, LecturerStatus status, Instant createdAt) {
+        public LecturerItem(Long id, String lecturerCode, String fullName, Long facultyId, String facultyName, Long subjectId, String subjectName, LecturerStatus status, Instant createdAt, double averageRating, long reviewCount) {
             this.id = id;
             this.lecturerCode = lecturerCode;
             this.fullName = fullName;
@@ -198,6 +200,8 @@ public final class AdminDtos {
             this.subjectName = subjectName;
             this.status = status;
             this.createdAt = createdAt;
+            this.averageRating = averageRating;
+            this.reviewCount = reviewCount;
         }
 
         public Long id() { return id; }
@@ -209,6 +213,8 @@ public final class AdminDtos {
         public String subjectName() { return subjectName; }
         public LecturerStatus status() { return status; }
         public Instant createdAt() { return createdAt; }
+        public double averageRating() { return averageRating; }
+        public long reviewCount() { return reviewCount; }
     }
 
     public static final class ImportCtuLecturersRequest {

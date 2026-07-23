@@ -25,19 +25,21 @@ public class LecturerController {
     @GetMapping
     public List<LecturerDtos.LecturerSummaryResponse> list(
             @RequestParam(required = false) String facultyCode,
-            @RequestParam(required = false) String subjectCode) {
-        return lecturerService.list(facultyCode, subjectCode);
+            @RequestParam(required = false) String subjectCode,
+            @RequestParam(required = false) String search) {
+        return lecturerService.list(facultyCode, subjectCode, search);
     }
 
     @GetMapping("/page")
     public Page<LecturerDtos.LecturerSummaryResponse> listPage(
             @RequestParam(required = false) String facultyCode,
             @RequestParam(required = false) String subjectCode,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 48);
-        return lecturerService.listPage(facultyCode, subjectCode, safePage, safeSize);
+        return lecturerService.listPage(facultyCode, subjectCode, search, safePage, safeSize);
     }
 
     @GetMapping("/{id}")
