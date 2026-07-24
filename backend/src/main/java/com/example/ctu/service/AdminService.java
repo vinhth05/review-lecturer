@@ -30,6 +30,11 @@ import com.example.ctu.repository.ReportRepository;
 import com.example.ctu.repository.ReviewRepository;
 import com.example.ctu.repository.SubjectRepository;
 import com.example.ctu.repository.UserRepository;
+import com.example.ctu.repository.LecturerRatingStats;
+import com.example.ctu.repository.TopLecturerProjection;
+import com.example.ctu.repository.FacultyLecturerCountProjection;
+import com.example.ctu.repository.FacultyReviewStatsProjection;
+import com.example.ctu.repository.FacultyPendingCountProjection;
 
 @Service
 @Transactional(readOnly = true)
@@ -150,22 +155,41 @@ public class AdminService {
     }
 
     @Transactional(readOnly = true)
-    public AdminDtos.PageResponse<AdminDtos.LecturerItem> listLecturers(int page, int size) {
+    public AdminDtos.PageResponse<AdminDtos.LecturerItem> listLecturers(int page, int size, String keyword) {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 100);
         Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Lecturer> lecturerPage = lecturerRepository.findAll(pageable);
-        List<AdminDtos.LecturerItem> content = lecturerPage.getContent().stream()
-                .map(lecturer -> new AdminDtos.LecturerItem(
-                lecturer.getId(),
-                lecturer.getLecturerCode(),
-                lecturer.getFullName(),
-                lecturer.getFaculty().getId(),
-                lecturer.getFaculty().getName(),
-                lecturer.getSubject() == null ? null : lecturer.getSubject().getId(),
-                lecturer.getSubject() == null ? null : lecturer.getSubject().getName(),
-                lecturer.getStatus(),
-                lecturer.getCreatedAt()))
+        Page<Lecturer> lecturerPage = lecturerRepository.searchAllLecturers(keyword, pageable);
+        
+        List<Lecturer> lecturers = lecturerPage.getContent();
+        Map<Long, LecturerRatingStats> statsMap = java.util.Collections.emptyMap();
+        if (!lecturers.isEmpty()) {
+            List<Long> lecturerIds = lecturers.stream().map(Lecturer::getId).toList();
+            List<LecturerRatingStats> ratingStats = reviewRepository.findRatingStatsByLecturerIds(lecturerIds);
+            statsMap = ratingStats.stream()
+                    .collect(Collectors.toMap(LecturerRatingStats::getLecturerId, stats -> stats));
+        }
+        
+        final Map<Long, LecturerRatingStats> finalStatsMap = statsMap;
+        List<AdminDtos.LecturerItem> content = lecturers.stream()
+                .map(lecturer -> {
+                    LecturerRatingStats stats = finalStatsMap.get(lecturer.getId());
+                    double avg = stats != null && stats.getAverageRating() != null ? stats.getAverageRating() : 0.0;
+                    long count = stats != null && stats.getReviewCount() != null ? stats.getReviewCount() : 0L;
+                    return new AdminDtos.LecturerItem(
+                            lecturer.getId(),
+                            lecturer.getLecturerCode(),
+                            lecturer.getFullName(),
+                            lecturer.getFaculty().getId(),
+                            lecturer.getFaculty().getName(),
+                            lecturer.getSubject() == null ? null : lecturer.getSubject().getId(),
+                            lecturer.getSubject() == null ? null : lecturer.getSubject().getName(),
+                            lecturer.getStatus(),
+                            lecturer.getCreatedAt(),
+                            avg,
+                            count
+                    );
+                })
                 .toList();
         return new AdminDtos.PageResponse<>(content, lecturerPage.getNumber(), lecturerPage.getSize(), lecturerPage.getTotalElements(), lecturerPage.getTotalPages(), lecturerPage.isFirst(), lecturerPage.isLast());
     }
@@ -272,7 +296,7 @@ public class AdminService {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 100);
         Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Report> reportPage = reportRepository.findAll(pageable);
+        Page<Report> reportPage = reportRepository.findAllWithReviewAndLecturer(pageable);
         List<AdminDtos.ReportItem> content = reportPage.getContent().stream()
                 .map(report -> new AdminDtos.ReportItem(
                 report.getId(),
@@ -331,70 +355,80 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public AdminDtos.AdminStatisticResponse statistics() {
-        List<Lecturer> lecturers = lecturerRepository.findAll();
-        List<com.example.ctu.entity.Review> approvedReviews = reviewRepository.findAll().stream()
-                .filter(com.example.ctu.entity.Review::isApproved)
-                .toList();
-        List<com.example.ctu.entity.Review> pendingReviews = reviewRepository.findAll().stream()
-                .filter(review -> !review.isApproved())
-                .toList();
-        List<Report> reports = reportRepository.findAll();
+        long totalStudents = userRepository.count();
+        long totalFaculties = facultyRepository.count();
+        long totalSubjects = subjectRepository.count();
+        long totalLecturers = lecturerRepository.count();
+        long totalReviews = reviewRepository.count();
+        long pendingReviewsCount = reviewRepository.countByApprovedFalse();
 
+        // 1. Fetch count of lecturers per faculty
+        List<FacultyLecturerCountProjection> lecturerCounts = lecturerRepository.findLecturerCountByFaculty();
+        Map<Long, Long> lecturerCountMap = lecturerCounts.stream()
+                .collect(Collectors.toMap(FacultyLecturerCountProjection::getFacultyId, FacultyLecturerCountProjection::getLecturerCount));
+
+        // 2. Fetch reviews statistics (approved) per faculty
+        List<FacultyReviewStatsProjection> reviewStats = reviewRepository.findReviewStatsByFaculty();
+        Map<Long, FacultyReviewStatsProjection> reviewStatsMap = reviewStats.stream()
+                .collect(Collectors.toMap(FacultyReviewStatsProjection::getFacultyId, stats -> stats));
+
+        // 3. Fetch pending reviews count per faculty
+        List<FacultyPendingCountProjection> pendingCounts = reviewRepository.findPendingCountByFaculty();
+        Map<Long, Long> pendingCountMap = pendingCounts.stream()
+                .collect(Collectors.toMap(FacultyPendingCountProjection::getFacultyId, FacultyPendingCountProjection::getPendingReviewCount));
+
+        // Assemble Faculty Statistics
         List<AdminDtos.FacultyStatisticItem> facultyStatistics = facultyRepository.findAll().stream()
                 .map(faculty -> {
-                    List<Lecturer> facultyLecturers = lecturers.stream().filter(lecturer -> lecturer.getFaculty().getId().equals(faculty.getId())).toList();
-                    List<com.example.ctu.entity.Review> facultyReviews = approvedReviews.stream()
-                            .filter(review -> review.getLecturer().getFaculty().getId().equals(faculty.getId()))
-                            .toList();
-                    long pending = pendingReviews.stream()
-                            .filter(review -> review.getLecturer().getFaculty().getId().equals(faculty.getId()))
-                            .count();
+                    long lecturerCount = lecturerCountMap.getOrDefault(faculty.getId(), 0L);
+                    FacultyReviewStatsProjection stats = reviewStatsMap.get(faculty.getId());
+                    long revCount = stats != null && stats.getReviewCount() != null ? stats.getReviewCount() : 0L;
+                    double avgRating = stats != null && stats.getAverageRating() != null ? stats.getAverageRating() : 0.0;
+                    long pending = pendingCountMap.getOrDefault(faculty.getId(), 0L);
                     return new AdminDtos.FacultyStatisticItem(
                             faculty.getId(),
                             faculty.getName(),
-                            facultyLecturers.size(),
-                            facultyReviews.size(),
-                            averageRating(facultyReviews),
+                            lecturerCount,
+                            revCount,
+                            avgRating,
                             pending
                     );
                 })
                 .sorted(Comparator.comparing(AdminDtos.FacultyStatisticItem::facultyName))
                 .toList();
 
-        List<AdminDtos.TopLecturerItem> topLecturers = lecturers.stream()
-                .map(lecturer -> new AdminDtos.TopLecturerItem(
-                lecturer.getId(),
-                lecturer.getFullName(),
-                lecturer.getFaculty().getName(),
-                averageRating(approvedReviews.stream().filter(review -> review.getLecturer().getId().equals(lecturer.getId())).toList()),
-                reviewRepository.countByLecturer_IdAndApproved(lecturer.getId(), true)
-        ))
-                .sorted(Comparator.comparing(AdminDtos.TopLecturerItem::averageRating).reversed())
-                .limit(10)
+        // 4. Fetch Top 10 Lecturers by Rating
+        Pageable topTen = PageRequest.of(0, 10);
+        List<TopLecturerProjection> topLecturersProjections = reviewRepository.findTopLecturers(topTen);
+        List<AdminDtos.TopLecturerItem> topLecturers = topLecturersProjections.stream()
+                .map(p -> new AdminDtos.TopLecturerItem(
+                        p.getLecturerId(),
+                        p.getLecturerName(),
+                        p.getFacultyName(),
+                        p.getAverageRating() != null ? p.getAverageRating() : 0.0,
+                        p.getReviewCount() != null ? p.getReviewCount() : 0L
+                ))
                 .toList();
 
-        Map<Long, Long> reportCountByLecturer = reports.stream()
-                .collect(Collectors.groupingBy(report -> report.getReview().getLecturer().getId(), Collectors.counting()));
-
-        List<AdminDtos.TopLecturerItem> topReportedLecturers = lecturers.stream()
-                .map(lecturer -> new AdminDtos.TopLecturerItem(
-                lecturer.getId(),
-                lecturer.getFullName(),
-                lecturer.getFaculty().getName(),
-                averageRating(approvedReviews.stream().filter(review -> review.getLecturer().getId().equals(lecturer.getId())).toList()),
-                reportCountByLecturer.getOrDefault(lecturer.getId(), 0L)
-        ))
-                .sorted(Comparator.comparing(AdminDtos.TopLecturerItem::reviewCount).reversed())
-                .limit(10)
+        // 5. Fetch Top 10 Reported Lecturers
+        List<TopLecturerProjection> topReportedProjections = reviewRepository.findTopReportedLecturers(topTen);
+        List<AdminDtos.TopLecturerItem> topReportedLecturers = topReportedProjections.stream()
+                .map(p -> new AdminDtos.TopLecturerItem(
+                        p.getLecturerId(),
+                        p.getLecturerName(),
+                        p.getFacultyName(),
+                        p.getAverageRating() != null ? p.getAverageRating() : 0.0,
+                        p.getReviewCount() != null ? p.getReviewCount() : 0L
+                ))
                 .toList();
 
         return new AdminDtos.AdminStatisticResponse(
-                userRepository.count(),
-                facultyRepository.count(),
-                subjectRepository.count(),
-                lecturerRepository.count(),
-                reviewRepository.count(),
-                pendingReviews.size(),
+                totalStudents,
+                totalFaculties,
+                totalSubjects,
+                totalLecturers,
+                totalReviews,
+                pendingReviewsCount,
                 facultyStatistics,
                 topLecturers,
                 topReportedLecturers
@@ -406,7 +440,7 @@ public class AdminService {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 100);
         Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<com.example.ctu.entity.Review> reviewPage = reviewRepository.findAll(pageable);
+        Page<com.example.ctu.entity.Review> reviewPage = reviewRepository.findAllWithLecturerAndFaculty(pageable);
 
         List<AdminDtos.ReviewItem> content = reviewPage.getContent().stream()
                 .map(review -> new AdminDtos.ReviewItem(
