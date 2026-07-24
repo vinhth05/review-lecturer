@@ -10,10 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Search, Star, Building2, BookOpen, ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export default function Lecturers() {
   const [searchTerm, setSearchTerm] = useState('');
   const [faculty, setFaculty] = useState('all');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const { data: faculties } = useQuery({
     queryKey: ['faculties'],
@@ -21,9 +23,10 @@ export default function Lecturers() {
   });
 
   const { data: lecturersData, isLoading } = useQuery({
-    queryKey: ['lecturers', faculty, searchTerm],
+    queryKey: ['lecturers', faculty, debouncedSearchTerm],
     queryFn: () => lecturerApi.getLecturersPage({
       facultyCode: faculty !== 'all' ? faculty : undefined,
+      search: debouncedSearchTerm || undefined,
       page: 0,
       size: 12
     })
@@ -114,7 +117,7 @@ export default function Lecturers() {
           animate="show"
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
         >
-          {lecturers.filter(l => l.fullName.toLowerCase().includes(searchTerm.toLowerCase())).map((lecturer) => (
+          {lecturers.map((lecturer) => (
             <motion.div variants={item} key={lecturer.id}>
               <Card className="overflow-hidden h-full flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/50 bg-card/50 backdrop-blur-sm group rounded-2xl relative">
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/40 via-primary to-primary/40 opacity-0 group-hover:opacity-100 transition-opacity" />

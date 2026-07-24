@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Star, ExternalLink, Calendar, BookOpen, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 
 export default function MyReviews() {
   const { data: myReviews, isLoading } = useQuery({

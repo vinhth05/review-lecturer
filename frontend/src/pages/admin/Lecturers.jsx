@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Badge } from '@/components/ui/badge';
 import { Search, EyeOff, Eye, Plus, Edit, Trash2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const lecturerSchema = z.object({
   lecturerCode: z.string().min(1, 'Code is required').max(50, 'Max 50 characters'),
@@ -26,6 +27,7 @@ export default function Lecturers() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [keyword, setKeyword] = useState('');
+  const debouncedKeyword = useDebounce(keyword, 300);
   
   // Modal states
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -51,11 +53,11 @@ export default function Lecturers() {
   });
 
   const { data: response, isLoading } = useQuery({
-    queryKey: ['admin-lecturers', page, keyword],
+    queryKey: ['admin-lecturers', page, debouncedKeyword],
     queryFn: () => adminApi.getLecturers({ 
       page, 
       size: 10,
-      keyword: keyword || undefined
+      keyword: debouncedKeyword || undefined
     }),
   });
 
