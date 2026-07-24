@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.FetchType;
@@ -27,7 +28,11 @@ import java.time.Instant;
 @AllArgsConstructor
 @SuppressWarnings("unused")
 @Entity
-@Table(name = "reviews")
+@Table(name = "reviews", indexes = {
+    @Index(name = "idx_review_lecturer_approved", columnList = "lecturer_id, is_approved"),
+    @Index(name = "idx_review_anonymous", columnList = "anonymous_hash"),
+    @Index(name = "idx_review_created", columnList = "created_at")
+})
 public class Review {
 
     @Id
