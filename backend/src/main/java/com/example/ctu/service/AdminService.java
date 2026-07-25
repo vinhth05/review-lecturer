@@ -487,9 +487,7 @@ public class AdminService {
         if (!reviewRepository.existsById(reviewId)) {
             throw new ResourceNotFoundException("Review không tồn tại");
         }
-        reportRepository.findAll().stream()
-                .filter(report -> report.getReview().getId().equals(reviewId))
-                .forEach(report -> reportRepository.delete(report));
+        reportRepository.deleteByReviewId(reviewId);
         reviewRepository.deleteById(reviewId);
     }
 

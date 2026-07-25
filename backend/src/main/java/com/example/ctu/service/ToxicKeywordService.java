@@ -29,7 +29,7 @@ public class ToxicKeywordService {
 
     @Transactional
     public void bootstrapDefaultsIfMissing() {
-        if (!toxicKeywordRepository.findAll().isEmpty()) {
+        if (toxicKeywordRepository.count() > 0) {
             return;
         }
         List<String> defaults = properties.review().toxicKeywords();

@@ -39,7 +39,8 @@ public class CtuLecturerImportService {
     @Transactional
     public AdminDtos.ImportCtuLecturersResponse importFromCtu(AdminDtos.ImportCtuLecturersRequest request) {
         int maxPages = request.maxPages() == null ? 3 : Math.max(1, Math.min(30, request.maxPages()));
-        Faculty fallbackFaculty = resolveFallbackFaculty(request.fallbackFacultyId());
+        List<Faculty> allFaculties = facultyRepository.findAll();
+        Faculty fallbackFaculty = resolveFallbackFaculty(request.fallbackFacultyId(), allFaculties);
 
         int fetchedRows = 0;
         int imported = 0;
@@ -79,7 +80,7 @@ public class CtuLecturerImportService {
                         continue;
                     }
 
-                    Faculty faculty = mapFacultyBySpecialization(specialization).orElse(fallbackFaculty);
+                    Faculty faculty = mapFacultyBySpecialization(specialization, allFaculties).orElse(fallbackFaculty);
                     Lecturer lecturer = Lecturer.builder()
                             .lecturerCode(lecturerCode)
                             .fullName(name)
@@ -98,23 +99,23 @@ public class CtuLecturerImportService {
         return new AdminDtos.ImportCtuLecturersResponse(maxPages, fetchedRows, imported, skipped, errors);
     }
 
-    private Faculty resolveFallbackFaculty(Long fallbackFacultyId) {
+    private Faculty resolveFallbackFaculty(Long fallbackFacultyId, List<Faculty> allFaculties) {
         if (fallbackFacultyId != null) {
             return facultyRepository.findById(fallbackFacultyId)
                     .orElseThrow(() -> new ResourceNotFoundException("Fallback faculty không tồn tại"));
         }
-        return facultyRepository.findAll().stream()
+        return allFaculties.stream()
                 .sorted(Comparator.comparing(Faculty::getName))
                 .findFirst()
                 .orElseThrow(() -> new BadRequestException("Cần có ít nhất 1 khoa trước khi import giảng viên"));
     }
 
-    private Optional<Faculty> mapFacultyBySpecialization(String specialization) {
+    private Optional<Faculty> mapFacultyBySpecialization(String specialization, List<Faculty> allFaculties) {
         if (specialization == null || specialization.isBlank()) {
             return Optional.empty();
         }
         String normalized = specialization.toLowerCase(Locale.ROOT);
-        return facultyRepository.findAll().stream()
+        return allFaculties.stream()
                 .filter(faculty -> normalized.contains(tokenizeFacultyName(faculty.getName())))
                 .findFirst();
     }

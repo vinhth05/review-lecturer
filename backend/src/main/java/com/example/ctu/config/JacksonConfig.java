@@ -1,4 +1,4 @@
-git package com.example.ctu.config;
+package com.example.ctu.config;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
