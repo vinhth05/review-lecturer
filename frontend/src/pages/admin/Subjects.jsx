@@ -80,7 +80,8 @@ export default function Subjects() {
 
   const openEditModal = (subject) => {
     setSelectedSubject(subject);
-    const facId = faculties?.find(f => f.name === subject.facultyName)?.id?.toString() || '';
+    const faculty = faculties?.find(f => f.name === subject.facultyName);
+    const facId = faculty?.id?.toString() || '';
     resetEdit({ code: subject.code, name: subject.name, facultyId: facId });
     setIsEditOpen(true);
   };
