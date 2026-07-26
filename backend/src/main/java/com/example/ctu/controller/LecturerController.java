@@ -11,16 +11,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.ctu.dto.lecturer.LecturerDtos;
 import com.example.ctu.service.LecturerService;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/lecturers")
+@RequiredArgsConstructor
 public class LecturerController {
 
     private final LecturerService lecturerService;
-
-    public LecturerController(LecturerService lecturerService) {
-        this.lecturerService = lecturerService;
-    }
 
     @GetMapping
     public List<LecturerDtos.LecturerSummaryResponse> list(
