@@ -9,7 +9,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public interface ReportRepository extends JpaRepository<Report, Long> {
     List<Report> findByReview_IdOrderByCreatedAtDesc(Long reviewId);
     long countByReview_Id(Long reviewId);
