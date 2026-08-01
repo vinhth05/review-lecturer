@@ -202,9 +202,7 @@ npm run dev
 ## Authors
 
 Developed by the **CTU Review Platform Team**.
-
 ---
-
 ## License
 
 This project is intended for educational and academic purposes.
