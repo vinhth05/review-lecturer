@@ -150,10 +150,10 @@ public class CtuLecturerImportService {
         return value == null ? "" : value.replaceAll("\\s+", " ").trim();
     }
 
-    private String generateLecturerCode(String name) {
+    String generateLecturerCode(String name) {
         String base = name.toUpperCase(Locale.ROOT)
-                .replaceAll("[^A-Z0-9]", "")
-                .replaceAll("\u0110", "D");
+                .replaceAll("\u0110", "D")
+                .replaceAll("[^A-Z0-9]", "");
         if (base.length() > 8) {
             base = base.substring(0, 8);
         }
