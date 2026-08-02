@@ -9,4 +9,5 @@ import com.example.ctu.entity.PendingRegistration;
 public interface PendingRegistrationRepository extends JpaRepository<PendingRegistration, Long> {
     Optional<PendingRegistration> findByEmail(String email);
     void deleteByEmail(String email);
+    void deleteByStudentCode(String studentCode);
 }

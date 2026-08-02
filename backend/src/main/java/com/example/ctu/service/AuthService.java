@@ -125,6 +125,10 @@ public class AuthService {
         facultyRepository.findById(request.facultyId())
                 .orElseThrow(() -> new ResourceNotFoundException("Khoa không tồn tại"));
         
+        // Clean up any existing pending registrations to prevent constraint violations
+        pendingRegistrationRepository.deleteByEmail(request.email());
+        pendingRegistrationRepository.deleteByStudentCode(request.studentCode());
+
         // Store registration data as PendingRegistration row (NOT yet a User)
         Instant now = Instant.now();
         Instant expiresAt = now.plusSeconds(properties.otp().ttlMinutes() * 60);

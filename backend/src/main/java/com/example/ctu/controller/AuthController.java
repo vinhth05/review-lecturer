@@ -29,7 +29,7 @@ public class AuthController {
      */
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody AuthDtos.RegisterRequest request) {
-        String result = authService.register(request);
+        String result = authService.registerTemporarily(request);
         return ResponseEntity.ok(result);
     }
 

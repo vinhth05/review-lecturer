@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.ctu.config.AppProperties;
 import com.example.ctu.entity.RefreshToken;
 import com.example.ctu.entity.User;
+import com.example.ctu.exception.BadRequestException;
 import com.example.ctu.exception.ResourceNotFoundException;
 import com.example.ctu.repository.RefreshTokenRepository;
 
@@ -42,7 +43,7 @@ public class RefreshTokenService {
                 .orElseThrow(() -> new ResourceNotFoundException("Refresh token không tồn tại"));
 
         if (!refreshToken.isValid()) {
-            throw new RuntimeException("Refresh token không hợp lệ hoặc đã hết hạn");
+            throw new BadRequestException("Refresh token không hợp lệ hoặc đã hết hạn");
         }
 
         // Revoke old token
