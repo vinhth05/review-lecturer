@@ -88,7 +88,7 @@ public class ReviewService {
                 .comment(request.comment())
                 .semester(request.semester())
                 .academicYear(request.academicYear())
-            .approved(true)
+            .approved(false)
                 .build();
         Review saved = reviewRepository.save(review);
         messagingTemplate.convertAndSend("/topic/admin/reviews", saved.getId());
