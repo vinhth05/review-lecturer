@@ -40,6 +40,9 @@ const processQueue = (error, token = null) => {
 // Response Interceptor
 axiosInstance.interceptors.response.use(
   (response) => {
+    if (response.data && response.data.hasOwnProperty('success') && response.data.hasOwnProperty('data')) {
+      return response.data.data;
+    }
     return response.data;
   },
   async (error) => {
@@ -66,8 +69,12 @@ axiosInstance.interceptors.response.use(
           // Cannot use authApi.refreshToken directly due to circular dependency.
           // Using a separate axios instance to avoid interceptor loop.
           const res = await axios.post(`${axiosInstance.defaults.baseURL}/auth/refresh-token`, { refreshToken });
-          const newAccessToken = res.data.token;
-          const newRefreshToken = res.data.refreshToken;
+          const payload = res.data;
+          const responseData = (payload && payload.hasOwnProperty('success') && payload.hasOwnProperty('data'))
+              ? payload.data
+              : payload;
+          const newAccessToken = responseData.token;
+          const newRefreshToken = responseData.refreshToken;
           
           localStorage.setItem('access_token', newAccessToken);
           if (newRefreshToken) {
