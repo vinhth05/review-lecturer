@@ -42,9 +42,9 @@ class CtuLecturerImportServiceTest {
 
     @Test
     void generateLecturerCode_WithDong_convertsToD() {
-        String name = "Nguyễn Văn Điệp";
-        // NGUYỄN VĂN ĐIỆP -> replace \u0110 -> NGUYỄN VĂN DIỆP -> NGUYNVNDIP -> NGUYNVND (8 chars) -> CTUNGUYNVND
-        String expected = "CTUNGUYNVND";
+        String name = "Đỗ Giang";
+        // Đỗ Giang -> replace Đ/đ -> D/d, normalize diacritics -> DO GIANG -> DOGIANG -> CTUDOGIANG
+        String expected = "CTUDOGIANG";
 
         when(lecturerRepository.existsByLecturerCode(expected)).thenReturn(false);
 

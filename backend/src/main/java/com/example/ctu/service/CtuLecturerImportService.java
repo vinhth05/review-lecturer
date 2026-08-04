@@ -151,8 +151,11 @@ public class CtuLecturerImportService {
     }
 
     String generateLecturerCode(String name) {
-        String base = name.toUpperCase(Locale.ROOT)
-                .replaceAll("\u0110", "D")
+        String normalized = name.replaceAll("\u0110", "D").replaceAll("\u0111", "d");
+        String temp = java.text.Normalizer.normalize(normalized, java.text.Normalizer.Form.NFD);
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        String base = pattern.matcher(temp).replaceAll("")
+                .toUpperCase(Locale.ROOT)
                 .replaceAll("[^A-Z0-9]", "");
         if (base.length() > 8) {
             base = base.substring(0, 8);
