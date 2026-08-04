@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.ctu.dto.common.ApiResponse;
 import com.example.ctu.dto.lecturer.LecturerDtos;
 import com.example.ctu.service.LecturerService;
 import lombok.RequiredArgsConstructor;
@@ -21,15 +22,15 @@ public class LecturerController {
     private final LecturerService lecturerService;
 
     @GetMapping
-    public List<LecturerDtos.LecturerSummaryResponse> list(
+    public ApiResponse<List<LecturerDtos.LecturerSummaryResponse>> list(
             @RequestParam(required = false) String facultyCode,
             @RequestParam(required = false) String subjectCode,
             @RequestParam(required = false) String search) {
-        return lecturerService.list(facultyCode, subjectCode, search);
+        return ApiResponse.success(lecturerService.list(facultyCode, subjectCode, search));
     }
 
     @GetMapping("/page")
-    public Page<LecturerDtos.LecturerSummaryResponse> listPage(
+    public ApiResponse<Page<LecturerDtos.LecturerSummaryResponse>> listPage(
             @RequestParam(required = false) String facultyCode,
             @RequestParam(required = false) String subjectCode,
             @RequestParam(required = false) String search,
@@ -37,11 +38,11 @@ public class LecturerController {
             @RequestParam(defaultValue = "12") int size) {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 48);
-        return lecturerService.listPage(facultyCode, subjectCode, search, safePage, safeSize);
+        return ApiResponse.success(lecturerService.listPage(facultyCode, subjectCode, search, safePage, safeSize));
     }
 
     @GetMapping("/{id}")
-    public LecturerDtos.LecturerDetailResponse detail(@PathVariable Long id) {
-        return lecturerService.detail(id);
+    public ApiResponse<LecturerDtos.LecturerDetailResponse> detail(@PathVariable Long id) {
+        return ApiResponse.success(lecturerService.detail(id));
     }
 }

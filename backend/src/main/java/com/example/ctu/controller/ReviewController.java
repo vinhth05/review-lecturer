@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.ctu.dto.common.ApiResponse;
 import com.example.ctu.dto.review.ReviewDtos;
 import com.example.ctu.entity.Report;
 import com.example.ctu.entity.Review;
@@ -26,17 +27,17 @@ public class ReviewController {
     }
 
     @PostMapping("/reviews")
-    public ResponseEntity<Long> submit(@Valid @RequestBody ReviewDtos.CreateReviewRequest request) {
-        return ResponseEntity.ok(reviewService.submit(request).getId());
+    public ResponseEntity<ApiResponse<Long>> submit(@Valid @RequestBody ReviewDtos.CreateReviewRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(reviewService.submit(request).getId()));
     }
 
     @PostMapping("/reports")
-    public ResponseEntity<Long> report(@Valid @RequestBody ReviewDtos.CreateReportRequest request) {
-        return ResponseEntity.ok(reviewService.report(request).getId());
+    public ResponseEntity<ApiResponse<Long>> report(@Valid @RequestBody ReviewDtos.CreateReportRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(reviewService.report(request).getId()));
     }
 
     @org.springframework.web.bind.annotation.GetMapping("/reviews/me")
-    public ResponseEntity<java.util.List<ReviewDtos.MyReviewItem>> myReviews() {
-        return ResponseEntity.ok(reviewService.getMyReviews());
+    public ResponseEntity<ApiResponse<java.util.List<ReviewDtos.MyReviewItem>>> myReviews() {
+        return ResponseEntity.ok(ApiResponse.success(reviewService.getMyReviews()));
     }
 }

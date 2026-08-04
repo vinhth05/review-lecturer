@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.ctu.dto.auth.AuthDtos;
+import com.example.ctu.dto.common.ApiResponse;
 import com.example.ctu.service.AuthService;
 import com.example.ctu.service.CurrentUserService;
 
@@ -26,9 +27,9 @@ public class StudentController {
     }
 
     @GetMapping("/me")
-    public AuthDtos.ProfileResponse me() {
+    public ApiResponse<AuthDtos.ProfileResponse> me() {
         var user = currentUserService.requireCurrentUser();
-        return new AuthDtos.ProfileResponse(
+        AuthDtos.ProfileResponse response = new AuthDtos.ProfileResponse(
                 user.getStudentCode(),
                 user.getFullName(),
                 user.getEmail(),
@@ -36,17 +37,18 @@ public class StudentController {
                 user.getRole(),
                 user.isVerified()
         );
+        return ApiResponse.success(response);
     }
 
     @PutMapping("/me")
-    public AuthDtos.ProfileResponse updateMe(@Valid @RequestBody AuthDtos.UpdateProfileRequest request) {
+    public ApiResponse<AuthDtos.ProfileResponse> updateMe(@Valid @RequestBody AuthDtos.UpdateProfileRequest request) {
         var user = currentUserService.requireCurrentUser();
-        return authService.updateProfile(user.getId(), request);
+        return ApiResponse.success(authService.updateProfile(user.getId(), request));
     }
 
     @PostMapping("/me/change-password")
-    public String changePassword(@Valid @RequestBody AuthDtos.ChangePasswordRequest request) {
+    public ApiResponse<String> changePassword(@Valid @RequestBody AuthDtos.ChangePasswordRequest request) {
         var user = currentUserService.requireCurrentUser();
-        return authService.changePassword(user.getId(), request);
+        return ApiResponse.success(authService.changePassword(user.getId(), request));
     }
 }

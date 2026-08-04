@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.ctu.dto.common.ApiResponse;
 import com.example.ctu.entity.Faculty;
 import com.example.ctu.entity.Subject;
 import com.example.ctu.repository.FacultyRepository;
@@ -25,15 +26,15 @@ public class MetadataController {
     }
 
     @GetMapping("/faculties")
-    public List<Faculty> faculties() {
-        return facultyRepository.findAllByOrderByNameAsc();
+    public ApiResponse<List<Faculty>> faculties() {
+        return ApiResponse.success(facultyRepository.findAllByOrderByNameAsc());
     }
 
     @GetMapping("/subjects")
-    public List<Subject> subjects(@RequestParam(required = false) String facultyCode) {
+    public ApiResponse<List<Subject>> subjects(@RequestParam(required = false) String facultyCode) {
         if (facultyCode == null || facultyCode.isBlank()) {
-            return subjectRepository.findAllByOrderByFaculty_NameAscNameAsc();
+            return ApiResponse.success(subjectRepository.findAllByOrderByFaculty_NameAscNameAsc());
         }
-        return subjectRepository.findByFaculty_CodeOrderByNameAsc(facultyCode);
+        return ApiResponse.success(subjectRepository.findByFaculty_CodeOrderByNameAsc(facultyCode));
     }
 }
