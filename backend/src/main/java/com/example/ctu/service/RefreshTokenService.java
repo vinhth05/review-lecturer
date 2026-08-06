@@ -11,6 +11,7 @@ import com.example.ctu.entity.RefreshToken;
 import com.example.ctu.entity.User;
 import com.example.ctu.exception.BadRequestException;
 import com.example.ctu.exception.ResourceNotFoundException;
+import com.example.ctu.exception.UnauthorizedException;
 import com.example.ctu.repository.RefreshTokenRepository;
 
 @Service
@@ -40,10 +41,10 @@ public class RefreshTokenService {
     @Transactional
     public RefreshToken rotateRefreshToken(String oldToken) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(oldToken)
-                .orElseThrow(() -> new ResourceNotFoundException("Refresh token không tồn tại"));
+                .orElseThrow(() -> new UnauthorizedException("Refresh token không tồn tại"));
 
         if (!refreshToken.isValid()) {
-            throw new BadRequestException("Refresh token không hợp lệ hoặc đã hết hạn");
+            throw new UnauthorizedException("Refresh token không hợp lệ hoặc đã hết hạn");
         }
 
         // Revoke old token
