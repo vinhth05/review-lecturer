@@ -16,14 +16,19 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.ctu.dto.common.ApiResponse;
 import com.example.ctu.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, 
+                                                   JwtAuthenticationFilter jwtAuthenticationFilter,
+                                                   ObjectMapper objectMapper) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
@@ -54,6 +59,20 @@ public class SecurityConfig {
                     .requestMatchers("/reviews", "/reports").hasRole("STUDENT")
                     .requestMatchers("/students/**").hasAnyRole("STUDENT", "ADMIN", "SUPER_ADMIN")
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            ApiResponse<Void> apiResponse = ApiResponse.error("Unauthenticated", "Unauthorized");
+                            response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            ApiResponse<Void> apiResponse = ApiResponse.error("Access denied: " + accessDeniedException.getMessage(), "Forbidden");
+                            response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
+                        })
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
