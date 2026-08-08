@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.ctu.dto.common.ApiResponse;
 import com.example.ctu.otp.dto.OtpSendRequest;
 import com.example.ctu.otp.dto.OtpVerifyRequest;
 import com.example.ctu.otp.dto.OtpVerifyResponse;
@@ -23,13 +24,14 @@ public class OtpController {
     }
 
     @PostMapping("/send-otp")
-    public ResponseEntity<Void> sendOtp(@Valid @RequestBody OtpSendRequest request) {
+    public ResponseEntity<ApiResponse<Void>> sendOtp(@Valid @RequestBody OtpSendRequest request) {
         otpService.sendOtp(request.email());
-        return ResponseEntity.accepted().build();
+        return ResponseEntity.ok(ApiResponse.success("Mã OTP đã được gửi thành công", null));
     }
 
     @PostMapping("/verify-otp")
-    public ResponseEntity<OtpVerifyResponse> verifyOtp(@Valid @RequestBody OtpVerifyRequest request) {
-        return ResponseEntity.ok(new OtpVerifyResponse(otpService.verifyOtp(request.email(), request.otp())));
+    public ResponseEntity<ApiResponse<OtpVerifyResponse>> verifyOtp(@Valid @RequestBody OtpVerifyRequest request) {
+        boolean verified = otpService.verifyOtp(request.email(), request.otp());
+        return ResponseEntity.ok(ApiResponse.success("Xác thực OTP thành công", new OtpVerifyResponse(verified)));
     }
 }

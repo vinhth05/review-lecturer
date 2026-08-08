@@ -51,7 +51,7 @@ class OtpControllerIntegrationTest {
         mockMvc.perform(post("/api/auth/send-otp")
             .contentType(json)
                 .content("{\"email\":\"otp-integration@example.com\"}"))
-            .andExpect(status().isAccepted());
+            .andExpect(status().isOk());
 
         String otp = redis.opsForValue().get(OTP_PREFIX + "otp-integration@example.com");
         assertThat(otp).isNotNull();
@@ -67,7 +67,7 @@ class OtpControllerIntegrationTest {
             .contentType(json)
                 .content("{\"email\":\"verify-integration@example.com\",\"otp\":\"123456\"}"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.verified").value(true));
+            .andExpect(jsonPath("$.data.verified").value(true));
 
         String otp = redis.opsForValue().get(OTP_PREFIX + "verify-integration@example.com");
         assertThat(otp).isNull();
