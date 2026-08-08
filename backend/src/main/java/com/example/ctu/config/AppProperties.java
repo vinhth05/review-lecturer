@@ -42,7 +42,7 @@ public record AppProperties(
     public record Topic(String otpEmail) {
     }
 
-    public record Seed(Accounts accounts) {
+    public record Seed(boolean enabled, Accounts accounts) {
     }
 
     public record Accounts(Account admin, Account student, Account superAdmin) {
