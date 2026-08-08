@@ -8,8 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.ctu.dto.common.ApiResponse;
-import com.example.ctu.entity.Faculty;
-import com.example.ctu.entity.Subject;
+import com.example.ctu.dto.metadata.MetadataDtos;
 import com.example.ctu.repository.FacultyRepository;
 import com.example.ctu.repository.SubjectRepository;
 
@@ -26,15 +25,29 @@ public class MetadataController {
     }
 
     @GetMapping("/faculties")
-    public ApiResponse<List<Faculty>> faculties() {
-        return ApiResponse.success(facultyRepository.findAllByOrderByNameAsc());
+    public ApiResponse<List<MetadataDtos.FacultyResponse>> faculties() {
+        List<MetadataDtos.FacultyResponse> list = facultyRepository.findAllByOrderByNameAsc().stream()
+                .map(f -> new MetadataDtos.FacultyResponse(f.getId(), f.getName(), f.getCode()))
+                .toList();
+        return ApiResponse.success(list);
     }
 
     @GetMapping("/subjects")
-    public ApiResponse<List<Subject>> subjects(@RequestParam(required = false) String facultyCode) {
-        if (facultyCode == null || facultyCode.isBlank()) {
-            return ApiResponse.success(subjectRepository.findAllByOrderByFaculty_NameAscNameAsc());
-        }
-        return ApiResponse.success(subjectRepository.findByFaculty_CodeOrderByNameAsc(facultyCode));
+    public ApiResponse<List<MetadataDtos.SubjectResponse>> subjects(@RequestParam(required = false) String facultyCode) {
+        var subjects = (facultyCode == null || facultyCode.isBlank())
+                ? subjectRepository.findAllByOrderByFaculty_NameAscNameAsc()
+                : subjectRepository.findByFaculty_CodeOrderByNameAsc(facultyCode);
+
+        List<MetadataDtos.SubjectResponse> list = subjects.stream()
+                .map(s -> new MetadataDtos.SubjectResponse(
+                        s.getId(),
+                        s.getName(),
+                        s.getCode(),
+                        s.getFaculty() != null ? s.getFaculty().getId() : null,
+                        s.getFaculty() != null ? s.getFaculty().getCode() : null,
+                        s.getFaculty() != null ? s.getFaculty().getName() : null
+                ))
+                .toList();
+        return ApiResponse.success(list);
     }
-}
+}
