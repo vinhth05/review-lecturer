@@ -8,7 +8,6 @@ backend/src/main/resources/application.properties
 # Backend
 backend/target/
 backend/.mvn/
-backend/src/main/resources/db
 database/
 mvnw/
 mvnw.cmd
@@ -20,6 +19,7 @@ frontend/dist/
 # Env
 .env
 .env.*
+!.env.example
 
 # IDE
 .vscode/
