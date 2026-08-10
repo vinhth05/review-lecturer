@@ -3,6 +3,7 @@ package com.example.ctu.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,6 +17,7 @@ import com.example.ctu.repository.FacultyRepository;
 import com.example.ctu.repository.UserRepository;
 
 @Component
+@ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")
 public class RoleTestAccountBootstrap implements ApplicationRunner {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RoleTestAccountBootstrap.class);
@@ -46,21 +48,21 @@ public class RoleTestAccountBootstrap implements ApplicationRunner {
             UserRepository userRepository,
             FacultyRepository facultyRepository,
             PasswordEncoder passwordEncoder,
-            @Value("${app.seed.accounts.admin.student-code:AD0001}") String adminStudentCode,
-            @Value("${app.seed.accounts.admin.full-name:Quan tri vien CTU}") String adminFullName,
-            @Value("${app.seed.accounts.admin.email:admin@ctu.edu.vn}") String adminEmail,
-            @Value("${app.seed.accounts.admin.password:Admin@123}") String adminPassword,
-            @Value("${app.seed.accounts.admin.faculty-code:ICT}") String adminFacultyCode,
-            @Value("${app.seed.accounts.student.student-code:SV0001}") String studentStudentCode,
-            @Value("${app.seed.accounts.student.full-name:Sinh vien Demo}") String studentFullName,
-            @Value("${app.seed.accounts.student.email:student01@student.ctu.edu.vn}") String studentEmail,
-            @Value("${app.seed.accounts.student.password:Student@123}") String studentPassword,
-            @Value("${app.seed.accounts.student.faculty-code:ECO}") String studentFacultyCode,
-            @Value("${app.seed.accounts.super-admin.student-code:SA0001}") String superAdminStudentCode,
-            @Value("${app.seed.accounts.super-admin.full-name:Super Admin CTU}") String superAdminFullName,
-            @Value("${app.seed.accounts.super-admin.email:superadmin@ctu.edu.vn}") String superAdminEmail,
-            @Value("${app.seed.accounts.super-admin.password:Super@123}") String superAdminPassword,
-            @Value("${app.seed.accounts.super-admin.faculty-code:ICT}") String superAdminFacultyCode
+            @Value("${app.seed.accounts.admin.student-code}") String adminStudentCode,
+            @Value("${app.seed.accounts.admin.full-name}") String adminFullName,
+            @Value("${app.seed.accounts.admin.email}") String adminEmail,
+            @Value("${app.seed.accounts.admin.password}") String adminPassword,
+            @Value("${app.seed.accounts.admin.faculty-code}") String adminFacultyCode,
+            @Value("${app.seed.accounts.student.student-code}") String studentStudentCode,
+            @Value("${app.seed.accounts.student.full-name}") String studentFullName,
+            @Value("${app.seed.accounts.student.email}") String studentEmail,
+            @Value("${app.seed.accounts.student.password}") String studentPassword,
+            @Value("${app.seed.accounts.student.faculty-code}") String studentFacultyCode,
+            @Value("${app.seed.accounts.super-admin.student-code}") String superAdminStudentCode,
+            @Value("${app.seed.accounts.super-admin.full-name}") String superAdminFullName,
+            @Value("${app.seed.accounts.super-admin.email}") String superAdminEmail,
+            @Value("${app.seed.accounts.super-admin.password}") String superAdminPassword,
+            @Value("${app.seed.accounts.super-admin.faculty-code}") String superAdminFacultyCode
     ) {
         this.userRepository = userRepository;
         this.facultyRepository = facultyRepository;
@@ -85,6 +87,7 @@ public class RoleTestAccountBootstrap implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
+        validateSeedConfiguration();
         LOGGER.info("=== Starting test account bootstrap ===");
         Faculty adminFaculty = resolveOrCreateFaculty(adminFacultyCode, "Trường Công nghệ Thông tin & Truyền thông");
         Faculty studentFaculty = resolveOrCreateFaculty(studentFacultyCode, "Trường Kinh tế");
@@ -94,16 +97,30 @@ public class RoleTestAccountBootstrap implements ApplicationRunner {
         LOGGER.info("Student faculty resolved: {}", studentFaculty.getCode());
         LOGGER.info("SuperAdmin faculty resolved: {}", superAdminFaculty.getCode());
 
-        LOGGER.info("Creating ADMIN account: {}", adminEmail);
+        LOGGER.info("Creating ADMIN bootstrap account");
         upsertAccount(adminStudentCode, adminFullName, adminEmail, adminPassword, Role.ADMIN, adminFaculty);
 
-        LOGGER.info("Creating STUDENT account: {}", studentEmail);
+        LOGGER.info("Creating STUDENT bootstrap account");
         upsertAccount(studentStudentCode, studentFullName, studentEmail, studentPassword, Role.STUDENT, studentFaculty);
 
-        LOGGER.info("Creating SUPER_ADMIN account: {}", superAdminEmail);
+        LOGGER.info("Creating SUPER_ADMIN bootstrap account");
         upsertAccount(superAdminStudentCode, superAdminFullName, superAdminEmail, superAdminPassword, Role.SUPER_ADMIN, superAdminFaculty);
         
         LOGGER.info("=== Test account bootstrap completed ===");
+    }
+
+    private void validateSeedConfiguration() {
+        if (java.util.stream.Stream.of(
+                adminStudentCode, adminFullName, adminEmail, adminFacultyCode,
+                studentStudentCode, studentFullName, studentEmail, studentFacultyCode,
+                superAdminStudentCode, superAdminFullName, superAdminEmail, superAdminFacultyCode)
+                .anyMatch(value -> value == null || value.isBlank())) {
+            throw new IllegalStateException("Seed accounts are enabled but identity fields are incomplete");
+        }
+        if (java.util.stream.Stream.of(adminPassword, studentPassword, superAdminPassword)
+                .anyMatch(value -> value == null || value.length() < 12)) {
+            throw new IllegalStateException("Seed account passwords must contain at least 12 characters");
+        }
     }
 
     @SuppressWarnings("null")
@@ -129,7 +146,7 @@ public class RoleTestAccountBootstrap implements ApplicationRunner {
                 .or(() -> userRepository.findByStudentCode(studentCode))
                 .orElseGet(() -> User.builder().email(email).studentCode(studentCode).build());
 
-        LOGGER.debug("Processing account - email: {}, role: {}, faculty: {}", email, role, faculty.getCode());
+        LOGGER.debug("Processing bootstrap account - role: {}, faculty: {}", role, faculty.getCode());
 
         user.setStudentCode(studentCode);
         user.setFullName(fullName);
@@ -137,10 +154,10 @@ public class RoleTestAccountBootstrap implements ApplicationRunner {
         user.setFaculty(faculty);
         user.setVerified(true);
 
-        LOGGER.debug("Resetting password for test account: {}", email);
+        LOGGER.debug("Resetting password for bootstrap account with role {}", role);
         user.setPasswordHash(passwordEncoder.encode(plainPassword));
 
         userRepository.save(user);
-        LOGGER.info("Account upserted successfully - email: {}, role: {}, verified: true", email, role);
+        LOGGER.info("Bootstrap account upserted successfully - role: {}, verified: true", role);
     }
 }
