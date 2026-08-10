@@ -14,7 +14,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -42,6 +41,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String email = jwtService.parseClaims(token).getSubject();
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                if (!userDetails.isAccountNonLocked() || !userDetails.isEnabled()
+                        || !userDetails.isAccountNonExpired() || !userDetails.isCredentialsNonExpired()) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
                 UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,
@@ -64,17 +68,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return token.isBlank() ? null : token;
         }
 
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null) {
-            return null;
-        }
-
-        for (Cookie cookie : cookies) {
-            if ("AUTH_TOKEN".equals(cookie.getName())) {
-                String token = cookie.getValue();
-                return (token == null || token.isBlank()) ? null : token;
-            }
-        }
         return null;
     }
 }

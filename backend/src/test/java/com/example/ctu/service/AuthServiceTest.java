@@ -160,9 +160,10 @@ class AuthServiceTest {
         when(jwtService.generateToken(1L, "john@student.ctu.edu.vn", "STUDENT")).thenReturn("mock-jwt-token");
         
         com.example.ctu.entity.RefreshToken mockRefreshToken = com.example.ctu.entity.RefreshToken.builder()
-                .token("mock-refresh-token")
+                .tokenHash("stored-token-hash")
                 .build();
-        when(refreshTokenService.createRefreshToken(user)).thenReturn(mockRefreshToken);
+        when(refreshTokenService.createRefreshToken(user)).thenReturn(
+                new RefreshTokenService.RefreshTokenGrant(mockRefreshToken, "mock-refresh-token"));
 
         // Act
         AuthDtos.AuthResponse response = authService.verify(request);

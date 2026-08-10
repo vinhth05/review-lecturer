@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.ctu.config.AppProperties;
 import com.example.ctu.dto.auth.AuthDtos;
 import com.example.ctu.entity.Faculty;
-import com.example.ctu.entity.RefreshToken;
 import com.example.ctu.entity.User;
 import com.example.ctu.entity.enums.Role;
 import com.example.ctu.exception.BadRequestException;
@@ -67,21 +66,21 @@ public class AuthService {
                        RefreshTokenService refreshTokenService,
                        com.example.ctu.repository.PendingRegistrationRepository pendingRegistrationRepository,
                        AppProperties properties,
-                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.admin.email:admin@ctu.edu.vn}") String adminSeedEmail,
-                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.admin.password:Admin@123}") String adminSeedPassword,
-                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.admin.student-code:AD0001}") String adminSeedStudentCode,
-                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.admin.full-name:Quan tri vien CTU}") String adminSeedFullName,
-                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.admin.faculty-code:ICT}") String adminSeedFacultyCode,
-                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.student.email:student01@student.ctu.edu.vn}") String studentSeedEmail,
-                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.student.password:Student@123}") String studentSeedPassword,
-                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.student.student-code:SV0001}") String studentSeedStudentCode,
-                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.student.full-name:Sinh vien Demo}") String studentSeedFullName,
-                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.student.faculty-code:ECO}") String studentSeedFacultyCode,
-                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.super-admin.email:superadmin@ctu.edu.vn}") String superAdminSeedEmail,
-                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.super-admin.password:Super@123}") String superAdminSeedPassword,
-                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.super-admin.student-code:SA0001}") String superAdminSeedStudentCode,
-                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.super-admin.full-name:Super Admin CTU}") String superAdminSeedFullName,
-                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.super-admin.faculty-code:ICT}") String superAdminSeedFacultyCode) {
+                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.admin.email}") String adminSeedEmail,
+                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.admin.password}") String adminSeedPassword,
+                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.admin.student-code}") String adminSeedStudentCode,
+                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.admin.full-name}") String adminSeedFullName,
+                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.admin.faculty-code}") String adminSeedFacultyCode,
+                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.student.email}") String studentSeedEmail,
+                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.student.password}") String studentSeedPassword,
+                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.student.student-code}") String studentSeedStudentCode,
+                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.student.full-name}") String studentSeedFullName,
+                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.student.faculty-code}") String studentSeedFacultyCode,
+                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.super-admin.email}") String superAdminSeedEmail,
+                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.super-admin.password}") String superAdminSeedPassword,
+                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.super-admin.student-code}") String superAdminSeedStudentCode,
+                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.super-admin.full-name}") String superAdminSeedFullName,
+                       @org.springframework.beans.factory.annotation.Value("${app.seed.accounts.super-admin.faculty-code}") String superAdminSeedFacultyCode) {
         this.userRepository = userRepository;
         this.facultyRepository = facultyRepository;
         this.passwordEncoder = passwordEncoder;
@@ -142,7 +141,7 @@ public class AuthService {
             .expiresAt(expiresAt)
             .build();
         pendingRegistrationRepository.save(pending);
-        LOGGER.info("Pending registration saved for email: {}", request.email());
+        LOGGER.info("Pending registration saved");
         
         // Generate and send OTP
         otpService.sendOtp(request.email());
@@ -182,13 +181,13 @@ public class AuthService {
         try {
             // Verify OTP (includes attempt checking and timing-safe comparison)
             otpService.verifyOtp(request.email(), request.otp());
-            LOGGER.info("OTP verified for email: {}", request.email());
+            LOGGER.info("Registration OTP verified");
             
             // Check if this is a new registration (pending registration in DB)
             var pendingOpt = pendingRegistrationRepository.findByEmail(request.email());
             if (pendingOpt.isPresent()) {
                 var pending = pendingOpt.get();
-                LOGGER.info("Creating new user account for email: {}", request.email());
+                LOGGER.info("Creating verified user account");
                 Faculty faculty = facultyRepository.findById(pending.getFacultyId())
                     .orElseThrow(() -> new ResourceNotFoundException("Khoa không tồn tại"));
                 User user = User.builder()
@@ -220,13 +219,13 @@ public class AuthService {
 
     @Transactional
     public AuthDtos.AuthResponse login(AuthDtos.LoginRequest request) {
-        LOGGER.info("Login attempt for email: {}", request.email());
+        LOGGER.debug("Login attempt received");
         User seedUser = authenticateSeedAccount(request.email(), request.password());
         if (seedUser != null) {
             if (seedUser.isLocked()) {
                 throw new BadRequestException("Tài khoản đã bị khóa");
             }
-            LOGGER.info("Seed account login succeeded for: {}", request.email());
+            LOGGER.info("Seed account login succeeded");
             return createAuthResponse(seedUser);
         }
 
@@ -234,23 +233,23 @@ public class AuthService {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.email(), request.password())
             );
-            LOGGER.info("Authentication succeeded for: {}", request.email());
+            LOGGER.debug("Authentication succeeded");
         } catch (AuthenticationException exception) {
-            LOGGER.warn("Authentication failed for {}: {}", request.email(), exception.getMessage());
+            LOGGER.warn("Authentication failed");
             throw new BadRequestException("Thông tin đăng nhập không hợp lệ");
         }
 
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BadRequestException("Thông tin đăng nhập không hợp lệ"));
         if (user.isLocked()) {
-            LOGGER.warn("User {} is locked", request.email());
+            LOGGER.warn("Login rejected for locked account");
             throw new BadRequestException("Tài khoản đã bị khóa");
         }
         if (!user.isVerified()) {
-            LOGGER.warn("User {} not verified", request.email());
+            LOGGER.warn("Login rejected for unverified account");
             throw new BadRequestException("Tài khoản chưa được xác thực OTP");
         }
-        LOGGER.info("Login successful for: {}", request.email());
+        LOGGER.info("Login successful");
         return createAuthResponse(user);
     }
 
@@ -284,6 +283,7 @@ public class AuthService {
 
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
+        refreshTokenService.revokeAllForUser(user);
         return "Đổi mật khẩu thành công";
     }
 
@@ -314,6 +314,7 @@ public class AuthService {
         otpService.verifyOtp(request.email(), request.otp());
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
+        refreshTokenService.revokeAllForUser(user);
         return "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.";
     }
 
@@ -329,11 +330,15 @@ public class AuthService {
 
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        refreshTokenService.revokeAllForUser(user);
         return "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.";
     }
 
     @Transactional
     private User authenticateSeedAccount(String email, String password) {
+        if (properties.seed() == null || !properties.seed().enabled()) {
+            return null;
+        }
         SeedAccount seedAccount = resolveSeedAccount(email);
         if (seedAccount == null || !seedAccount.password().equals(password)) {
             return null;
@@ -385,8 +390,8 @@ public class AuthService {
 
     private AuthDtos.AuthResponse createAuthResponse(User user) {
         String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name());
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
-        return new AuthDtos.AuthResponse(token, user.getRole(), user.isVerified(), user.getFullName(), user.getFaculty().getName(), refreshToken.getToken());
+        RefreshTokenService.RefreshTokenGrant refreshToken = refreshTokenService.createRefreshToken(user);
+        return new AuthDtos.AuthResponse(token, user.getRole(), user.isVerified(), user.getFullName(), user.getFaculty().getName(), refreshToken.token());
     }
 
     private AuthDtos.ProfileResponse toProfileResponse(User user) {
@@ -402,9 +407,14 @@ public class AuthService {
 
     @Transactional
     public AuthDtos.RefreshTokenResponse refreshAccessToken(AuthDtos.RefreshTokenRequest request) {
-        RefreshToken refreshToken = refreshTokenService.rotateRefreshToken(request.refreshToken());
-        User user = refreshToken.getUser();
+        RefreshTokenService.RefreshTokenGrant refreshToken = refreshTokenService.rotateRefreshToken(request.refreshToken());
+        User user = refreshToken.refreshToken().getUser();
         String newToken = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name());
-        return new AuthDtos.RefreshTokenResponse(newToken, refreshToken.getToken());
+        return new AuthDtos.RefreshTokenResponse(newToken, refreshToken.token());
+    }
+
+    @Transactional
+    public void logout(AuthDtos.RefreshTokenRequest request) {
+        refreshTokenService.revokeRefreshToken(request.refreshToken());
     }
 }
