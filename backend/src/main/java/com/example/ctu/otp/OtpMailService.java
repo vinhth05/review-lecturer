@@ -67,9 +67,9 @@ public class OtpMailService {
             helper.setSubject(subject);
             helper.setText(html, true);
             mailSender.send(mimeMessage);
-            LOGGER.info("OTP email sent to {}", to);
+            LOGGER.info("OTP email sent");
         } catch (MailException | MessagingException exception) {
-            LOGGER.error("Failed to send OTP email to {}", to, exception);
+            LOGGER.error("Failed to send OTP email", exception);
         }
     }
 }

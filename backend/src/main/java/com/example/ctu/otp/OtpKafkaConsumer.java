@@ -24,6 +24,6 @@ public class OtpKafkaConsumer {
         )
     public void consume(OtpEmailMessage message) {
         otpMailService.sendOtpEmail(message);
-        LOGGER.info("OTP email queued for send: {}", message.email());
+        LOGGER.info("OTP email queued for send");
     }
 }

@@ -25,6 +25,6 @@ public class OtpKafkaProducer {
 
     public void send(OtpEmailMessage message) {
         kafkaTemplate.send(otpEmailTopic, message.email(), message);
-        LOGGER.info("OTP email message sent to Kafka topic {} for {}", otpEmailTopic, message.email());
+        LOGGER.info("OTP email message sent to Kafka topic {}", otpEmailTopic);
     }
 }

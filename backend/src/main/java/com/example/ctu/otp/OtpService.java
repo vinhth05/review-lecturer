@@ -48,7 +48,7 @@ public class OtpService {
         Instant expiresAt = Instant.now().plus(ttl);
 
         redis.opsForValue().set(key, otp, ttl);
-        LOGGER.info("OTP stored in Redis for {} (ttlMinutes={})", normalizedEmail, ttlMinutes);
+        LOGGER.info("OTP stored in Redis (ttlMinutes={})", ttlMinutes);
 
         otpKafkaProducer.send(new OtpEmailMessage(normalizedEmail, otp, expiresAt, appName));
     }
@@ -66,7 +66,7 @@ public class OtpService {
         }
 
         redis.delete(key);
-        LOGGER.info("OTP verified and cleared for {}", normalizedEmail);
+        LOGGER.info("OTP verified and cleared");
         return true;
     }
 
@@ -75,7 +75,7 @@ public class OtpService {
         String token = UUID.randomUUID().toString().replace("-", "");
         String key = passwordResetTokenKey(token);
         redis.opsForValue().set(key, normalizedEmail, Duration.ofMinutes(ttlMinutes));
-        LOGGER.info("Password reset token stored for {}", normalizedEmail);
+        LOGGER.info("Password reset token stored");
         return token;
     }
 

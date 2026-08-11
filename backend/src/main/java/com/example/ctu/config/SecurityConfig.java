@@ -52,9 +52,12 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/actuator/**",
+                                "/actuator/health",
+                                "/actuator/health/**",
+                                "/actuator/info",
                                 "/ws/**"
                         ).permitAll()
+                    .requestMatchers("/actuator/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
                     .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
                     .requestMatchers("/reviews", "/reports").hasRole("STUDENT")
                     .requestMatchers("/students/**").hasAnyRole("STUDENT", "ADMIN", "SUPER_ADMIN")
@@ -92,8 +95,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource(AppProperties properties) {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(properties.cors().allowedOrigins());
-        configuration.addAllowedHeader("*");
-        configuration.addAllowedMethod("*");
+        configuration.setAllowedHeaders(java.util.List.of(
+                "Authorization", "Content-Type", "Accept", "X-Correlation-Id"));
+        configuration.setAllowedMethods(java.util.List.of(
+                "GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
+        configuration.setExposedHeaders(java.util.List.of("X-Correlation-Id"));
+        configuration.setMaxAge(3600L);
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

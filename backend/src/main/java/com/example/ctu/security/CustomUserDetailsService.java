@@ -26,13 +26,13 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        LOGGER.debug("Loading user details for email: {}", username);
+        LOGGER.debug("Loading user details");
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> {
-                    LOGGER.warn("User not found for email: {}", username);
+                    LOGGER.warn("Authentication principal not found");
                     return new UsernameNotFoundException("User not found");
                 });
-        LOGGER.debug("User found: email={}, role={}, verified={}, locked={}", user.getEmail(), user.getRole(), user.isVerified(), user.isLocked());
+        LOGGER.debug("User found: role={}, verified={}, locked={}", user.getRole(), user.isVerified(), user.isLocked());
         return org.springframework.security.core.userdetails.User
             .withUsername(user.getEmail())
             .password(user.getPasswordHash())

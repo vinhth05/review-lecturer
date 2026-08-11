@@ -143,6 +143,6 @@ public class NotificationService {
      */
     public void notifyAllAdmins(String title, String message, String type) {
         // This would typically fetch all admin users and create notifications for each
-        log.info("Admin notification: {} - {}", title, message);
+        log.info("Admin notification dispatched");
     }
 }
