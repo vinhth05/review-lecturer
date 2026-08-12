@@ -21,6 +21,11 @@ import com.example.ctu.entity.Subject;
 import com.example.ctu.entity.User;
 import com.example.ctu.entity.enums.LecturerStatus;
 import com.example.ctu.entity.enums.Role;
+import com.example.ctu.entity.enums.ReviewStatus;
+import com.example.ctu.entity.enums.ReportResolution;
+import com.example.ctu.entity.enums.ReportStatus;
+import com.example.ctu.exception.ConflictException;
+import com.example.ctu.dto.review.ReviewDtos;
 import com.example.ctu.exception.BadRequestException;
 import com.example.ctu.exception.ForbiddenException;
 import com.example.ctu.exception.ResourceNotFoundException;
@@ -50,6 +55,7 @@ public class AdminService {
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
     private final CurrentUserService currentUserService;
+    private final RefreshTokenService refreshTokenService;
 
     public AdminService(FacultyRepository facultyRepository,
             SubjectRepository subjectRepository,
@@ -59,7 +65,8 @@ public class AdminService {
             UserRepository userRepository,
             org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
             AuditLogService auditLogService,
-            CurrentUserService currentUserService) {
+            CurrentUserService currentUserService,
+            RefreshTokenService refreshTokenService) {
         this.facultyRepository = facultyRepository;
         this.subjectRepository = subjectRepository;
         this.lecturerRepository = lecturerRepository;
@@ -69,6 +76,7 @@ public class AdminService {
         this.passwordEncoder = passwordEncoder;
         this.auditLogService = auditLogService;
         this.currentUserService = currentUserService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Transactional
@@ -86,7 +94,7 @@ public class AdminService {
                         "Tạo mới khoa: " + faculty.getName());
             }
         } catch (Exception e) {
-            // Silently fail audit logging to not disrupt main operation
+            throw new IllegalStateException("Required audit event could not be persisted", e);
         }
 
         return faculty;
@@ -229,7 +237,7 @@ public class AdminService {
                         "Xóa khoa: " + faculty.getName());
             }
         } catch (Exception e) {
-            // Silently fail audit logging to not disrupt main operation
+            throw new IllegalStateException("Required audit event could not be persisted", e);
         }
     }
 
@@ -296,7 +304,7 @@ public class AdminService {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 100);
         Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Report> reportPage = reportRepository.findAllWithReviewAndLecturer(pageable);
+        Page<Report> reportPage = reportRepository.findByStatusWithReviewAndLecturer(ReportStatus.PENDING, pageable);
         List<AdminDtos.ReportItem> content = reportPage.getContent().stream()
                 .map(report -> new AdminDtos.ReportItem(
                 report.getId(),
@@ -305,7 +313,11 @@ public class AdminService {
                 report.getReview().getLecturer().getFullName(),
                 report.getReview().getComment(),
                 report.getReason(),
-                report.getCreatedAt()))
+                report.getCreatedAt(),
+                report.getStatus(),
+                report.getResolutionNote(),
+                report.getResolvedAt(),
+                report.getVersion()))
                 .toList();
         return new AdminDtos.PageResponse<>(content, reportPage.getNumber(), reportPage.getSize(), reportPage.getTotalElements(), reportPage.getTotalPages(), reportPage.isFirst(), reportPage.isLast());
     }
@@ -318,12 +330,40 @@ public class AdminService {
     }
 
     @Transactional
+    public ReviewDtos.ReportResolutionResult resolveReport(
+            Long reportId, ReviewDtos.ResolveReportCommand command) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new ResourceNotFoundException("Report not found"));
+        if (command.expectedVersion() != null && report.getVersion() != command.expectedVersion()) {
+            throw new ConflictException("Report was changed by another moderator; reload and try again");
+        }
+
+        User actor = currentUserService.requireCurrentUser();
+        report.resolve(command.resolution(), command.note(), actor);
+        if (command.resolution() == ReportResolution.REJECT_REVIEW) {
+            com.example.ctu.entity.Review review = report.getReview();
+            review.moderate(ReviewStatus.REJECTED, command.note(), actor);
+            reviewRepository.save(review);
+            auditLogService.logSimple(actor, "MODERATE", "Review", review.getId(),
+                    "Review rejected after report resolution");
+        }
+
+        Report saved = reportRepository.save(report);
+        auditLogService.logSimple(actor, "RESOLVE", "Report", saved.getId(),
+                "Report resolved as " + saved.getStatus());
+        return new ReviewDtos.ReportResolutionResult(
+                saved.getId(), saved.getStatus(), saved.getResolutionNote(),
+                saved.getResolvedAt(), saved.getVersion());
+    }
+
+    @Transactional
     public String resetUserPassword(Long userId, AdminDtos.ResetUserPasswordRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
         String newPassword = request.newPassword();
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        refreshTokenService.revokeAllForUser(user);
 
         // Audit logging
         try {
@@ -333,7 +373,7 @@ public class AdminService {
                         "Đặt lại mật khẩu cho người dùng: " + user.getEmail());
             }
         } catch (Exception e) {
-            // Silently fail audit logging
+            throw new IllegalStateException("Required audit event could not be persisted", e);
         }
 
         return newPassword;
@@ -360,7 +400,7 @@ public class AdminService {
         long totalSubjects = subjectRepository.count();
         long totalLecturers = lecturerRepository.count();
         long totalReviews = reviewRepository.count();
-        long pendingReviewsCount = reviewRepository.countByApprovedFalse();
+        long pendingReviewsCount = reviewRepository.countByStatus(ReviewStatus.PENDING);
 
         // 1. Fetch count of lecturers per faculty
         List<FacultyLecturerCountProjection> lecturerCounts = lecturerRepository.findLecturerCountByFaculty();
@@ -458,7 +498,11 @@ public class AdminService {
                 review.getRatingSupport(),
                 review.isApproved(),
                 review.getCreatedAt(),
-                reportRepository.countByReview_Id(review.getId())
+                reportRepository.countByReview_IdAndStatus(review.getId(), ReportStatus.PENDING),
+                review.getStatus(),
+                review.getModerationReason(),
+                review.getModeratedAt(),
+                review.getVersion()
         ))
                 .toList();
 
@@ -507,14 +551,23 @@ public class AdminService {
     @Transactional
     public void bulkApproveReviews(List<Long> reviewIds) {
         List<com.example.ctu.entity.Review> reviews = reviewRepository.findAllById(reviewIds);
-        reviews.forEach(r -> r.setApproved(true));
+        if (reviews.size() != reviewIds.stream().distinct().count()) {
+            throw new ResourceNotFoundException("One or more reviews do not exist");
+        }
+        User actor = currentUserService.requireCurrentUser();
+        reviews.forEach(review -> review.moderate(ReviewStatus.APPROVED, null, actor));
         reviewRepository.saveAll(reviews);
+        reviews.forEach(review -> auditLogService.logSimple(
+                actor, "MODERATE", "Review", review.getId(), "Review transitioned to APPROVED"));
     }
 
     @Transactional
     public AdminDtos.UserItem setUserVerified(Long userId, boolean verified) {
         User user = findAdminUser(userId);
         user.setVerified(verified);
+        if (!verified) {
+            refreshTokenService.revokeAllForUser(user);
+        }
         return toUserItem(userRepository.save(user));
     }
 
@@ -527,13 +580,14 @@ public class AdminService {
         ensureSuperAdminSafety(target, true);
         target.setLocked(true);
         User saved = userRepository.save(target);
+        refreshTokenService.revokeAllForUser(saved);
 
         // Audit logging
         try {
             auditLogService.logSimple(actor, "UPDATE", "User", userId,
                     "Khóa người dùng: " + target.getEmail());
         } catch (Exception e) {
-            // Silently fail audit logging
+            throw new IllegalStateException("Required audit event could not be persisted", e);
         }
 
         return toUserItem(saved);
@@ -553,7 +607,7 @@ public class AdminService {
             auditLogService.logSimple(actor, "UPDATE", "User", userId,
                     "Mở khóa người dùng: " + target.getEmail());
         } catch (Exception e) {
-            // Silently fail audit logging
+            throw new IllegalStateException("Required audit event could not be persisted", e);
         }
 
         return toUserItem(saved);

@@ -5,6 +5,8 @@ import java.util.List;
 
 import com.example.ctu.entity.enums.LecturerStatus;
 import com.example.ctu.entity.enums.Role;
+import com.example.ctu.entity.enums.ReviewStatus;
+import com.example.ctu.entity.enums.ReportStatus;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 import jakarta.validation.constraints.NotBlank;
@@ -298,8 +300,12 @@ public final class AdminDtos {
         private final String comment;
         private final String reason;
         private final Instant createdAt;
+        private final ReportStatus status;
+        private final String resolutionNote;
+        private final Instant resolvedAt;
+        private final long version;
 
-        public ReportItem(Long id, Long reviewId, Long lecturerId, String lecturerName, String comment, String reason, Instant createdAt) {
+        public ReportItem(Long id, Long reviewId, Long lecturerId, String lecturerName, String comment, String reason, Instant createdAt, ReportStatus status, String resolutionNote, Instant resolvedAt, long version) {
             this.id = id;
             this.reviewId = reviewId;
             this.lecturerId = lecturerId;
@@ -307,6 +313,10 @@ public final class AdminDtos {
             this.comment = comment;
             this.reason = reason;
             this.createdAt = createdAt;
+            this.status = status;
+            this.resolutionNote = resolutionNote;
+            this.resolvedAt = resolvedAt;
+            this.version = version;
         }
 
         public Long id() { return id; }
@@ -316,6 +326,10 @@ public final class AdminDtos {
         public String comment() { return comment; }
         public String reason() { return reason; }
         public Instant createdAt() { return createdAt; }
+        public ReportStatus status() { return status; }
+        public String resolutionNote() { return resolutionNote; }
+        public Instant resolvedAt() { return resolvedAt; }
+        public long version() { return version; }
     }
 
     public static final class ResetUserPasswordRequest {
@@ -389,8 +403,10 @@ public final class AdminDtos {
         private final int ratingSupport;
         private final Instant createdAt;
         private final long reportCount;
+        private final ReviewStatus status;
+        private final long version;
 
-        public PendingReviewItem(Long id, Long lecturerId, String lecturerName, String facultyName, String comment, String semester, String academicYear, int ratingClarity, int ratingFairness, int ratingPressure, int ratingWorkload, int ratingSupport, Instant createdAt, long reportCount) {
+        public PendingReviewItem(Long id, Long lecturerId, String lecturerName, String facultyName, String comment, String semester, String academicYear, int ratingClarity, int ratingFairness, int ratingPressure, int ratingWorkload, int ratingSupport, Instant createdAt, long reportCount, ReviewStatus status, long version) {
             this.id = id;
             this.lecturerId = lecturerId;
             this.lecturerName = lecturerName;
@@ -405,6 +421,8 @@ public final class AdminDtos {
             this.ratingSupport = ratingSupport;
             this.createdAt = createdAt;
             this.reportCount = reportCount;
+            this.status = status;
+            this.version = version;
         }
 
         public Long id() { return id; }
@@ -421,6 +439,8 @@ public final class AdminDtos {
         public int ratingSupport() { return ratingSupport; }
         public Instant createdAt() { return createdAt; }
         public long reportCount() { return reportCount; }
+        public ReviewStatus status() { return status; }
+        public long version() { return version; }
     }
 
     public static final class ReviewItem {
@@ -439,8 +459,12 @@ public final class AdminDtos {
         private final boolean approved;
         private final Instant createdAt;
         private final long reportCount;
+        private final ReviewStatus status;
+        private final String moderationReason;
+        private final Instant moderatedAt;
+        private final long version;
 
-        public ReviewItem(Long id, Long lecturerId, String lecturerName, String facultyName, String comment, String semester, String academicYear, int ratingClarity, int ratingFairness, int ratingPressure, int ratingWorkload, int ratingSupport, boolean approved, Instant createdAt, long reportCount) {
+        public ReviewItem(Long id, Long lecturerId, String lecturerName, String facultyName, String comment, String semester, String academicYear, int ratingClarity, int ratingFairness, int ratingPressure, int ratingWorkload, int ratingSupport, boolean approved, Instant createdAt, long reportCount, ReviewStatus status, String moderationReason, Instant moderatedAt, long version) {
             this.id = id;
             this.lecturerId = lecturerId;
             this.lecturerName = lecturerName;
@@ -456,6 +480,10 @@ public final class AdminDtos {
             this.approved = approved;
             this.createdAt = createdAt;
             this.reportCount = reportCount;
+            this.status = status;
+            this.moderationReason = moderationReason;
+            this.moderatedAt = moderatedAt;
+            this.version = version;
         }
 
         public Long id() { return id; }
@@ -473,6 +501,10 @@ public final class AdminDtos {
         public boolean approved() { return approved; }
         public Instant createdAt() { return createdAt; }
         public long reportCount() { return reportCount; }
+        public ReviewStatus status() { return status; }
+        public String moderationReason() { return moderationReason; }
+        public Instant moderatedAt() { return moderatedAt; }
+        public long version() { return version; }
     }
 
     public static final class PageResponse<T> {

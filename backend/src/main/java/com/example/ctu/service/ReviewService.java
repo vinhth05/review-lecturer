@@ -16,7 +16,10 @@ import com.example.ctu.entity.Report;
 import com.example.ctu.entity.Review;
 import com.example.ctu.entity.User;
 import com.example.ctu.entity.enums.LecturerStatus;
+import com.example.ctu.entity.enums.ReviewStatus;
+import com.example.ctu.entity.enums.ReportStatus;
 import com.example.ctu.exception.BadRequestException;
+import com.example.ctu.exception.ConflictException;
 import com.example.ctu.exception.ForbiddenException;
 import com.example.ctu.exception.ResourceNotFoundException;
 import com.example.ctu.repository.LecturerRepository;
@@ -36,6 +39,7 @@ public class ReviewService {
     private final ToxicFilterService toxicFilterService;
     private final AppPropertiesFacade appPropertiesFacade;
     private final SimpMessagingTemplate messagingTemplate;
+    private final AuditLogService auditLogService;
 
     public ReviewService(ReviewRepository reviewRepository,
                          ReportRepository reportRepository,
@@ -44,7 +48,8 @@ public class ReviewService {
                          HashService hashService,
                          ToxicFilterService toxicFilterService,
                          AppPropertiesFacade appPropertiesFacade,
-                         SimpMessagingTemplate messagingTemplate) {
+                         SimpMessagingTemplate messagingTemplate,
+                         AuditLogService auditLogService) {
         this.reviewRepository = reviewRepository;
         this.reportRepository = reportRepository;
         this.lecturerRepository = lecturerRepository;
@@ -53,6 +58,7 @@ public class ReviewService {
         this.toxicFilterService = toxicFilterService;
         this.appPropertiesFacade = appPropertiesFacade;
         this.messagingTemplate = messagingTemplate;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
@@ -88,7 +94,8 @@ public class ReviewService {
                 .comment(request.comment())
                 .semester(request.semester())
                 .academicYear(request.academicYear())
-            .approved(false)
+                .approved(false)
+                .status(ReviewStatus.PENDING)
                 .build();
         Review saved = reviewRepository.save(review);
         messagingTemplate.convertAndSend("/topic/admin/reviews", saved.getId());
@@ -97,14 +104,31 @@ public class ReviewService {
 
     @Transactional
     public Report report(ReviewDtos.CreateReportRequest request) {
+        User reporter = requireVerifiedStudent();
+        String reporterHash = hashService.anonymousHash(reporter.getStudentCode());
         Review review = reviewRepository.findById(request.reviewId())
                 .orElseThrow(() -> new ResourceNotFoundException("Review không tồn tại"));
-        Report report = Report.builder().review(review).reason(request.reason()).build();
+        if (!review.isApproved() || review.getStatus() == ReviewStatus.REJECTED) {
+            throw new ConflictException("Only published reviews can be reported");
+        }
+        if (reporterHash.equals(review.getAnonymousHash())) {
+            throw new ConflictException("You cannot report your own review");
+        }
+        if (reportRepository.existsByReview_IdAndReporterHashAndStatus(
+                review.getId(), reporterHash, ReportStatus.PENDING)) {
+            throw new ConflictException("You already have a pending report for this review");
+        }
+        Report report = Report.builder()
+                .review(review)
+                .reporterHash(reporterHash)
+                .reason(request.reason().trim())
+                .status(ReportStatus.PENDING)
+                .build();
         return reportRepository.save(report);
     }
 
     public List<AdminDtos.PendingReviewItem> pendingReviews() {
-        return reviewRepository.findByApprovedFalseOrderByCreatedAtDesc().stream().map(review -> new AdminDtos.PendingReviewItem(
+        return reviewRepository.findByStatusOrderByCreatedAtDesc(ReviewStatus.PENDING).stream().map(review -> new AdminDtos.PendingReviewItem(
                 review.getId(),
                 review.getLecturer().getId(),
                 review.getLecturer().getFullName(),
@@ -118,7 +142,9 @@ public class ReviewService {
                 review.getRatingWorkload(),
                 review.getRatingSupport(),
                 review.getCreatedAt(),
-                reportRepository.countByReview_Id(review.getId())
+                reportRepository.countByReview_IdAndStatus(review.getId(), ReportStatus.PENDING),
+                review.getStatus(),
+                review.getVersion()
         )).toList();
     }
 
@@ -126,8 +152,50 @@ public class ReviewService {
     public Review moderate(Long reviewId, boolean approved) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review không tồn tại"));
-        review.setApproved(approved);
-        return reviewRepository.save(review);
+        User moderator = currentUserService.requireCurrentUser();
+        review.moderate(
+                approved ? ReviewStatus.APPROVED : ReviewStatus.REJECTED,
+                approved ? null : "Rejected through legacy moderation endpoint",
+                moderator
+        );
+        Review saved = reviewRepository.save(review);
+        auditModeration(saved, moderator);
+        return saved;
+    }
+
+    @Transactional
+    public ReviewDtos.ModerationResult moderate(Long reviewId,
+                                                ReviewStatus targetStatus,
+                                                String reason,
+                                                Long expectedVersion) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Review not found"));
+        if (expectedVersion != null && review.getVersion() != expectedVersion) {
+            throw new ConflictException("Review was changed by another moderator; reload and try again");
+        }
+
+        User moderator = currentUserService.requireCurrentUser();
+        review.moderate(targetStatus, reason, moderator);
+        Review saved = reviewRepository.save(review);
+        auditModeration(saved, moderator);
+        return new ReviewDtos.ModerationResult(
+                saved.getId(),
+                saved.getStatus(),
+                saved.getModerationReason(),
+                saved.getModeratedAt(),
+                saved.getVersion()
+        );
+    }
+
+    private void auditModeration(Review review, User moderator) {
+        auditLogService.logSimple(
+                moderator,
+                "MODERATE",
+                "Review",
+                review.getId(),
+                "Review transitioned to " + review.getStatus()
+        );
+        messagingTemplate.convertAndSend("/topic/admin/reviews", review.getId());
     }
 
     private User requireVerifiedStudent() {
@@ -157,7 +225,9 @@ public class ReviewService {
                             review.getComment(),
                             review.getSemester(),
                             review.getAcademicYear(),
-                            review.getCreatedAt()
+                            review.getCreatedAt(),
+                            review.getStatus(),
+                            review.getModerationReason()
                     );
                 }).toList();
     }

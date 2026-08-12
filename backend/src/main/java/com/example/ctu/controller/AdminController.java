@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.ctu.dto.admin.AdminDtos;
 import com.example.ctu.dto.common.ApiResponse;
+import com.example.ctu.dto.review.ReviewDtos;
 import com.example.ctu.entity.Faculty;
 import com.example.ctu.entity.Lecturer;
 import com.example.ctu.entity.Review;
@@ -89,6 +90,16 @@ public class AdminController {
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<Long>> approveReview(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(reviewService.moderate(id, true).getId()));
+    }
+
+    @PatchMapping("/reviews/{id}/moderation")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<ReviewDtos.ModerationResult>> moderateReview(
+            @PathVariable Long id,
+            @Valid @RequestBody ReviewDtos.ModerateReviewCommand command) {
+        return ResponseEntity.ok(ApiResponse.success(
+                reviewService.moderate(id, command.status(), command.reason(), command.expectedVersion())
+        ));
     }
 
     @PatchMapping("/lecturers/{id}/hide")
@@ -233,6 +244,14 @@ public class AdminController {
     public ResponseEntity<ApiResponse<Void>> deleteReport(@PathVariable Long id) {
         adminService.deleteReport(id);
         return ResponseEntity.ok(ApiResponse.success("Xóa báo cáo thành công", null));
+    }
+
+    @PatchMapping("/reports/{id}/resolution")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<ApiResponse<ReviewDtos.ReportResolutionResult>> resolveReport(
+            @PathVariable Long id,
+            @Valid @RequestBody ReviewDtos.ResolveReportCommand command) {
+        return ResponseEntity.ok(ApiResponse.success(adminService.resolveReport(id, command)));
     }
 
     @PostMapping("/reports/bulk-delete")

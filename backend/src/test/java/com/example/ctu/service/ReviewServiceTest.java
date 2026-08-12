@@ -36,6 +36,7 @@ class ReviewServiceTest {
     @Mock private ToxicFilterService toxicFilterService;
     @Mock private AppPropertiesFacade appPropertiesFacade;
     @Mock private SimpMessagingTemplate messagingTemplate;
+    @Mock private AuditLogService auditLogService;
 
     @InjectMocks
     private ReviewService reviewService;

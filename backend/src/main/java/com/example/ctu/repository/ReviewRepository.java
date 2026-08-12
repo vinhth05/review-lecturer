@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import com.example.ctu.entity.Review;
+import com.example.ctu.entity.enums.ReviewStatus;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findByLecturer_IdAndApprovedOrderByCreatedAtDesc(Long lecturerId, boolean approved);
@@ -17,6 +18,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     
     @EntityGraph(attributePaths = {"lecturer", "lecturer.faculty"})
     List<Review> findByApprovedFalseOrderByCreatedAtDesc();
+
+    @EntityGraph(attributePaths = {"lecturer", "lecturer.faculty"})
+    List<Review> findByStatusOrderByCreatedAtDesc(ReviewStatus status);
     
     List<Review> findByAnonymousHashOrderByCreatedAtDesc(String anonymousHash);
     long countByAnonymousHashAndCreatedAtBetween(String anonymousHash, Instant start, Instant end);
@@ -52,6 +56,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     long countReviewsThisMonth();
 
     long countByApprovedFalse();
+    long countByStatus(ReviewStatus status);
 
     @EntityGraph(attributePaths = {"lecturer", "lecturer.faculty"})
     @Query("select r from Review r")

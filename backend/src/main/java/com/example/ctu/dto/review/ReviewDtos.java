@@ -6,6 +6,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import com.example.ctu.entity.enums.ReviewStatus;
+import com.example.ctu.entity.enums.ReportResolution;
+import com.example.ctu.entity.enums.ReportStatus;
+
 public final class ReviewDtos {
 
     /**
@@ -29,11 +33,43 @@ public final class ReviewDtos {
 
     public record CreateReportRequest(
             @NotNull Long reviewId,
-            @NotBlank String reason
+            @NotBlank @Size(max = 1000) String reason
+    ) {
+    }
+
+    public record ResolveReportCommand(
+            @NotNull ReportResolution resolution,
+            @NotBlank @Size(max = 1000) String note,
+            Long expectedVersion
+    ) {
+    }
+
+    public record ReportResolutionResult(
+            Long reportId,
+            ReportStatus status,
+            String note,
+            java.time.Instant resolvedAt,
+            long version
     ) {
     }
 
     public record ModerateReviewRequest(boolean approved) {
+    }
+
+    public record ModerateReviewCommand(
+            @NotNull ReviewStatus status,
+            @Size(max = 1000) String reason,
+            Long expectedVersion
+    ) {
+    }
+
+    public record ModerationResult(
+            Long reviewId,
+            ReviewStatus status,
+            String reason,
+            java.time.Instant moderatedAt,
+            long version
+    ) {
     }
 
     public record MyReviewItem(
@@ -49,7 +85,9 @@ public final class ReviewDtos {
             String comment,
             String semester,
             String academicYear,
-            java.time.Instant createdAt
+            java.time.Instant createdAt,
+            ReviewStatus status,
+            String moderationReason
     ) {
     }
 }
