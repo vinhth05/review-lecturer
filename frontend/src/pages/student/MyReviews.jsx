@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { reviewApi } from '@/services/api/reviewApi';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Star, ExternalLink, Calendar, BookOpen, Clock } from 'lucide-react';
+import { Star, ExternalLink, Calendar, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -85,6 +86,9 @@ export default function MyReviews() {
                         </span>
                       </div>
                     </div>
+                    <Badge variant={review.status === 'APPROVED' ? 'default' : review.status === 'REJECTED' ? 'destructive' : 'secondary'}>
+                      {review.status || 'PENDING'}
+                    </Badge>
                     <div className="flex flex-col items-center justify-center bg-yellow-500/10 px-3 py-2 rounded-xl">
                       <div className="flex items-center text-yellow-600 font-black text-xl">
                         <Star className="h-5 w-5 fill-current mr-1" />
@@ -93,6 +97,12 @@ export default function MyReviews() {
                       <span className="text-[10px] uppercase font-bold text-yellow-600/70 tracking-wider mt-0.5">Rating</span>
                     </div>
                   </div>
+
+                  {review.status === 'REJECTED' && review.moderationReason && (
+                    <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+                      Moderation note: {review.moderationReason}
+                    </div>
+                  )}
                   
                   <div className="flex-1 my-4 bg-background/50 rounded-xl p-4 border border-border/30">
                     <p className="text-foreground/90 whitespace-pre-wrap text-[15px] leading-relaxed line-clamp-4 group-hover:line-clamp-none transition-all duration-300 relative">

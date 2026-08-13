@@ -1,38 +1,39 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/services/api/adminApi';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, AlertTriangle, MessageSquareOff } from 'lucide-react';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function Reports() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
+  const [resolutionTarget, setResolutionTarget] = useState(null);
+  const [resolutionNote, setResolutionNote] = useState('');
   
   const { data: response, isLoading } = useQuery({
     queryKey: ['admin-reports', page],
     queryFn: () => adminApi.getReports({ page, size: 10 }),
   });
 
-  const deleteReportMutation = useMutation({
-    mutationFn: (id) => adminApi.deleteReport(id),
+  const resolutionMutation = useMutation({
+    mutationFn: ({ report, resolution, note }) => adminApi.resolveReport(report.id, {
+      resolution,
+      note,
+      expectedVersion: report.version,
+    }),
     onSuccess: () => {
-      toast.success('Report resolved and deleted');
-      queryClient.invalidateQueries(['admin-reports']);
+      toast.success('Report resolved and retained in the audit history');
+      setResolutionTarget(null);
+      setResolutionNote('');
+      queryClient.invalidateQueries({ queryKey: ['admin-reports'] });
     },
-    onError: (error) => toast.error(error.message || 'Failed to delete report')
-  });
-
-  const deleteReviewMutation = useMutation({
-    mutationFn: (id) => adminApi.deleteReview(id),
-    onSuccess: () => {
-      toast.success('Review deleted successfully');
-      queryClient.invalidateQueries(['admin-reports']);
-    },
-    onError: (error) => toast.error(error.message || 'Failed to delete review')
+    onError: (error) => toast.error(error.message || 'Failed to resolve report')
   });
 
   const reports = response?.content || [];
@@ -77,8 +78,8 @@ export default function Reports() {
                   reports.map((report) => (
                     <TableRow key={report.id} className="group hover:bg-destructive/5 transition-colors">
                       <TableCell className="font-medium">
-                        {report.reporterName}
-                        <div className="text-xs text-muted-foreground">{report.reporterEmail}</div>
+                        Anonymous student
+                        <div className="text-xs text-muted-foreground">Report #{report.id}</div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="text-orange-600 bg-orange-50 border-orange-200">
@@ -91,18 +92,14 @@ export default function Reports() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">Pending</Badge>
+                        <Badge variant="secondary">{report.status || 'PENDING'}</Badge>
                       </TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button 
                           variant="outline" 
                           size="sm" 
                           className="text-destructive border-destructive hover:bg-destructive/10"
-                          onClick={() => {
-                            if (window.confirm('Delete the reported review? This will also remove the report.')) {
-                              deleteReviewMutation.mutate(report.reviewId);
-                            }
-                          }}
+                          onClick={() => setResolutionTarget({ report, resolution: 'REJECT_REVIEW' })}
                         >
                           <MessageSquareOff className="h-4 w-4 mr-2" /> Delete Review
                         </Button>
@@ -110,11 +107,7 @@ export default function Reports() {
                           variant="ghost" 
                           size="icon" 
                           className="text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-                          onClick={() => {
-                            if (window.confirm('Dismiss this report?')) {
-                              deleteReportMutation.mutate(report.id);
-                            }
-                          }}
+                          onClick={() => setResolutionTarget({ report, resolution: 'DISMISS' })}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -151,6 +144,38 @@ export default function Reports() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={Boolean(resolutionTarget)} onOpenChange={(open) => !open && setResolutionTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {resolutionTarget?.resolution === 'REJECT_REVIEW' ? 'Reject reported review' : 'Dismiss report'}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            The note is stored with the decision for later audit and conflict resolution.
+          </p>
+          <Textarea
+            value={resolutionNote}
+            onChange={(event) => setResolutionNote(event.target.value)}
+            maxLength={1000}
+            placeholder="Resolution note"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResolutionTarget(null)}>Cancel</Button>
+            <Button
+              variant={resolutionTarget?.resolution === 'REJECT_REVIEW' ? 'destructive' : 'default'}
+              disabled={resolutionNote.trim().length < 3 || resolutionMutation.isPending}
+              onClick={() => resolutionMutation.mutate({
+                ...resolutionTarget,
+                note: resolutionNote.trim(),
+              })}
+            >
+              Confirm decision
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

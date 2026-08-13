@@ -7,6 +7,7 @@ export const adminApi = {
   // Reviews
   getPendingReviews: () => axiosInstance.get('/admin/reviews/pending'),
   getReviews: (params) => axiosInstance.get('/admin/reviews', { params }),
+  moderateReview: (id, data) => axiosInstance.patch(`/admin/reviews/${id}/moderation`, data),
   approveReview: (id) => axiosInstance.patch(`/admin/reviews/${id}/approve`),
   rejectReview: (id) => axiosInstance.patch(`/admin/reviews/${id}/reject`),
   deleteReview: (id) => axiosInstance.delete(`/admin/reviews/${id}`),
@@ -53,6 +54,7 @@ export const adminApi = {
 
   // Reports
   getReports: (params) => axiosInstance.get('/admin/reports', { params }),
+  resolveReport: (id, data) => axiosInstance.patch(`/admin/reports/${id}/resolution`, data),
   deleteReport: (id) => axiosInstance.delete(`/admin/reports/${id}`),
   bulkDeleteReports: (ids) => axiosInstance.post('/admin/reports/bulk-delete', ids),
 };

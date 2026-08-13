@@ -4,32 +4,44 @@ import { adminApi } from '@/services/api/adminApi';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, X, Trash2, ShieldAlert } from 'lucide-react';
+import { Check, X, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function Reviews() {
   const queryClient = useQueryClient();
-  const [page, setPage] = useState(0);
+  const [reviewToReject, setReviewToReject] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState('');
   
   const { data: response, isLoading } = useQuery({
-    queryKey: ['admin-reviews-pending', page],
+    queryKey: ['admin-reviews-pending'],
     queryFn: () => adminApi.getPendingReviews(),
   });
 
   const approveMutation = useMutation({
-    mutationFn: (id) => adminApi.approveReview(id),
+    mutationFn: (review) => adminApi.moderateReview(review.id, {
+      status: 'APPROVED',
+      expectedVersion: review.version,
+    }),
     onSuccess: () => {
       toast.success('Review approved');
-      queryClient.invalidateQueries(['admin-reviews-pending']);
+      queryClient.invalidateQueries({ queryKey: ['admin-reviews-pending'] });
     },
     onError: (error) => toast.error(error.message || 'Failed to approve review')
   });
 
   const rejectMutation = useMutation({
-    mutationFn: (id) => adminApi.rejectReview(id),
+    mutationFn: ({ review, reason }) => adminApi.moderateReview(review.id, {
+      status: 'REJECTED',
+      reason,
+      expectedVersion: review.version,
+    }),
     onSuccess: () => {
       toast.success('Review rejected');
-      queryClient.invalidateQueries(['admin-reviews-pending']);
+      setReviewToReject(null);
+      setRejectionReason('');
+      queryClient.invalidateQueries({ queryKey: ['admin-reviews-pending'] });
     },
     onError: (error) => toast.error(error.message || 'Failed to reject review')
   });
@@ -103,14 +115,16 @@ export default function Reviews() {
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/50 pointer-events-none"></div>
                     <Button 
                       className="w-full bg-green-600 hover:bg-green-500 shadow-md hover:shadow-lg transition-all relative z-10" 
-                      onClick={() => approveMutation.mutate(review.id)}
+                      disabled={approveMutation.isPending || rejectMutation.isPending}
+                      onClick={() => approveMutation.mutate(review)}
                     >
                       <Check className="mr-2 h-4 w-4" /> Approve
                     </Button>
                     <Button 
                       variant="outline" 
                       className="w-full border-destructive text-destructive hover:bg-destructive hover:text-white transition-all relative z-10 shadow-sm"
-                      onClick={() => rejectMutation.mutate(review.id)}
+                      disabled={approveMutation.isPending || rejectMutation.isPending}
+                      onClick={() => setReviewToReject(review)}
                     >
                       <X className="mr-2 h-4 w-4" /> Reject
                     </Button>
@@ -121,6 +135,33 @@ export default function Reviews() {
           ))}
         </div>
       )}
+
+      <Dialog open={Boolean(reviewToReject)} onOpenChange={(open) => !open && setReviewToReject(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject review</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Add a reason so this moderation decision is traceable and useful to the reviewer.
+          </p>
+          <Textarea
+            value={rejectionReason}
+            onChange={(event) => setRejectionReason(event.target.value)}
+            maxLength={1000}
+            placeholder="Reason for rejection"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReviewToReject(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              disabled={rejectionReason.trim().length < 3 || rejectMutation.isPending}
+              onClick={() => rejectMutation.mutate({ review: reviewToReject, reason: rejectionReason.trim() })}
+            >
+              Confirm rejection
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
