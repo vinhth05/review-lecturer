@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
+import PageSkeleton from '@/components/PageSkeleton';
 
 const Landing = lazy(() => import('@/pages/public/Landing'));
 const Login = lazy(() => import('@/pages/public/Login'));
@@ -37,7 +38,7 @@ export default function AppRoutes() {
   const { isAuthenticated, isStudent, isAdmin } = useAuth();
 
   return (
-    <Suspense fallback={<Placeholder title="Loading..." />}>
+    <Suspense fallback={<PageSkeleton />}>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Landing />} />

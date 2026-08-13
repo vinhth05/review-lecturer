@@ -1,12 +1,13 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/auth-context';
+import { useTheme } from '@/contexts/theme-context';
 import { Button } from '@/components/ui/button';
 import { LayoutDashboard, Users, MessageSquare, Bookmark, Bell, Settings, User, LogOut, Moon, Sun, Menu } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import RouteErrorBoundary from '@/components/RouteErrorBoundary';
 
 export default function StudentLayout() {
   const { logout, user } = useAuth();
@@ -153,7 +154,9 @@ export default function StudentLayout() {
               transition={{ duration: 0.2 }}
               className="h-full p-4 md:p-8"
             >
-              <Outlet />
+              <RouteErrorBoundary>
+                <Outlet />
+              </RouteErrorBoundary>
             </motion.div>
           </AnimatePresence>
         </div>

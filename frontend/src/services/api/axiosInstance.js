@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { authApi } from './authApi';
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1',
@@ -18,16 +17,14 @@ axiosInstance.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 let isRefreshing = false;
 let failedQueue = [];
 
 const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
+  failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
@@ -48,52 +45,63 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isAuthEndpoint = originalRequest?.url?.includes('/auth/');
+
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
-        return new Promise(function(resolve, reject) {
+        return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
-        }).then(token => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return axiosInstance(originalRequest);
-        }).catch(err => {
-          return Promise.reject(err);
-        });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return axiosInstance(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
       const refreshToken = localStorage.getItem('refresh_token');
-      
+
       if (refreshToken) {
         try {
-          // Cannot use authApi.refreshToken directly due to circular dependency.
-          // Using a separate axios instance to avoid interceptor loop.
           const res = await axios.post(`${axiosInstance.defaults.baseURL}/auth/refresh-token`, { refreshToken });
           const payload = res.data;
           const responseData = (payload && payload.hasOwnProperty('success') && payload.hasOwnProperty('data'))
-              ? payload.data
-              : payload;
-          const newAccessToken = responseData.token;
-          const newRefreshToken = responseData.refreshToken;
-          
+            ? payload.data
+            : payload;
+
+          const newAccessToken = responseData?.token;
+          const newRefreshToken = responseData?.refreshToken;
+
+          if (!newAccessToken) {
+            throw new Error('Refresh token payload missing token');
+          }
+
           localStorage.setItem('access_token', newAccessToken);
           if (newRefreshToken) {
-             localStorage.setItem('refresh_token', newRefreshToken);
+            localStorage.setItem('refresh_token', newRefreshToken);
           }
-          
+
           axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          
+
           processQueue(null, newAccessToken);
           return axiosInstance(originalRequest);
         } catch (refreshError) {
           processQueue(refreshError, null);
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user');
           window.dispatchEvent(new Event('unauthorized'));
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;
         }
       } else {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
         window.dispatchEvent(new Event('unauthorized'));
       }
     }

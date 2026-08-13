@@ -7,4 +7,5 @@ export const authApi = {
   forgotPassword: (data) => axiosInstance.post('/auth/forgot-password', data),
   resetPassword: (data) => axiosInstance.post('/auth/reset-password', data),
   refreshToken: (data) => axiosInstance.post('/auth/refresh-token', data),
+  logout: (data) => axiosInstance.post('/auth/logout', data),
 };

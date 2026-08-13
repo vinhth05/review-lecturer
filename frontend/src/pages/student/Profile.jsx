@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Loader2, User, Camera, ShieldCheck, Clock, CheckCircle2 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth-context';
 import { motion } from 'framer-motion';
 
 const profileSchema = z.object({
@@ -30,7 +30,7 @@ const passwordSchema = z.object({
 
 export default function Profile() {
   const queryClient = useQueryClient();
-  const { user, updateUser } = useAuth();
+  const { updateUser } = useAuth();
   
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -45,13 +45,15 @@ export default function Profile() {
     queryFn: () => studentApi.getProfile()
   });
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
     resolver: zodResolver(profileSchema),
     values: {
       fullName: profile?.fullName || '',
       facultyId: profile ? faculties?.find(f => f.name === profile.facultyName)?.id?.toString() || '' : '',
     }
   });
+
+  const facultyId = watch('facultyId');
 
   const { register: registerPassword, handleSubmit: handlePasswordSubmit, reset: resetPasswordForm, formState: { errors: passwordErrors } } = useForm({
     resolver: zodResolver(passwordSchema)
@@ -156,7 +158,7 @@ export default function Profile() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-foreground">Faculty</label>
-                  <Select onValueChange={(value) => setValue('facultyId', value, { shouldValidate: true })} value={profile ? faculties?.find(f => f.name === profile.facultyName)?.id?.toString() : undefined}>
+                  <Select onValueChange={(value) => setValue('facultyId', value, { shouldValidate: true })} value={facultyId}>
                     <SelectTrigger className={`h-12 rounded-xl transition-all ${errors.facultyId ? "border-destructive focus:ring-destructive/20" : "hover:border-primary focus:ring-primary/20"}`}>
                       <SelectValue placeholder="Select faculty" />
                     </SelectTrigger>
