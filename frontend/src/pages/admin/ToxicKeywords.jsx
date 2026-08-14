@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { toxicKeywordSchema } from '@/schemas';
 import { adminApi } from '@/services/api/adminApi';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,20 +12,30 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Plus, Edit, Trash2, FileWarning, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const keywordSchema = z.object({
-  keyword: z.string().min(1, 'Keyword is required').max(100, 'Max 100 characters'),
-});
-
 export default function ToxicKeywords() {
   const queryClient = useQueryClient();
-  const [newKeyword, setNewKeyword] = useState('');
   
   // Edit modal states
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedKeyword, setSelectedKeyword] = useState(null);
 
-  const { register: registerEdit, handleSubmit: handleEditSubmit, reset: resetEdit, formState: { errors: editErrors } } = useForm({
-    resolver: zodResolver(keywordSchema)
+  const {
+    register: registerAdd,
+    handleSubmit: handleAddSubmit,
+    reset: resetAdd,
+    formState: { errors: addErrors }
+  } = useForm({
+    resolver: zodResolver(toxicKeywordSchema),
+    defaultValues: { keyword: '' }
+  });
+
+  const {
+    register: registerEdit,
+    handleSubmit: handleEditSubmit,
+    reset: resetEdit,
+    formState: { errors: editErrors }
+  } = useForm({
+    resolver: zodResolver(toxicKeywordSchema)
   });
 
   const { data: keywords, isLoading } = useQuery({
@@ -37,7 +47,7 @@ export default function ToxicKeywords() {
     mutationFn: (data) => adminApi.addToxicKeyword(data),
     onSuccess: () => {
       toast.success('Toxic keyword added');
-      setNewKeyword('');
+      resetAdd();
       queryClient.invalidateQueries(['admin-toxic-keywords']);
     },
     onError: (error) => toast.error(error.message || 'Failed to add keyword')
@@ -63,10 +73,8 @@ export default function ToxicKeywords() {
     onError: (error) => toast.error(error.message || 'Failed to delete keyword')
   });
 
-  const handleAdd = (e) => {
-    e.preventDefault();
-    if (!newKeyword.trim()) return;
-    addMutation.mutate({ keyword: newKeyword.trim() });
+  const onAddSubmit = (data) => {
+    addMutation.mutate({ keyword: data.keyword.trim() });
   };
 
   const openEditModal = (item) => {
@@ -88,17 +96,19 @@ export default function ToxicKeywords() {
 
       <Card className="glass-card overflow-hidden border-t-4 border-t-rose-600/50">
         <CardContent className="pt-6 p-0 sm:p-6">
-          <form onSubmit={handleAdd} className="flex gap-2 mb-6 max-w-md p-4 sm:p-0">
-            <Input 
-              placeholder="Enter new toxic keyword..." 
-              value={newKeyword}
-              onChange={(e) => setNewKeyword(e.target.value)}
-              disabled={addMutation.isPending}
-              className="bg-background/50 border-border/50 focus-visible:ring-rose-500/50 transition-all rounded-xl"
-            />
-            <Button type="submit" disabled={addMutation.isPending || !newKeyword.trim()} className="shadow-md hover:shadow-lg transition-all rounded-xl">
-              {addMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />} Add
-            </Button>
+          <form onSubmit={handleAddSubmit(onAddSubmit)} className="space-y-2 mb-6 max-w-md p-4 sm:p-0">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Enter new toxic keyword..."
+                {...registerAdd('keyword')}
+                disabled={addMutation.isPending}
+                className={`bg-background/50 border-border/50 focus-visible:ring-rose-500/50 transition-all rounded-xl ${addErrors.keyword ? 'border-destructive' : ''}`}
+              />
+              <Button type="submit" disabled={addMutation.isPending} className="shadow-md hover:shadow-lg transition-all rounded-xl">
+                {addMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />} Add
+              </Button>
+            </div>
+            {addErrors.keyword && <p className="text-sm text-destructive">{addErrors.keyword.message}</p>}
           </form>
 
           <div className="rounded-xl border bg-card/50 shadow-sm overflow-hidden border-t-0 sm:border-t">
