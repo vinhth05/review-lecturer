@@ -10,15 +10,18 @@ RUN mvn -q -DskipTests package
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 RUN addgroup --system app && adduser --system --ingroup app app
 
-COPY --from=build /app/target/*.jar app.jar
-RUN chown -R app:app /app
+COPY --from=build --chown=app:app /app/target/*.jar /app/app.jar
 
 USER app
 EXPOSE 8080
-ENV JAVA_OPTS="-Xms256m -Xmx512m -Dspring.profiles.active=prod"
-ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar /app/app.jar"]
+ENV JAVA_TOOL_OPTIONS="-XX:InitialRAMPercentage=25 -XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError" \
+    SPRING_PROFILES_ACTIVE="prod"
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 
 # basic container healthcheck
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 CMD curl -f http://localhost:8080/actuator/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 CMD curl -fsS http://localhost:8080/api/v1/actuator/health || exit 1
