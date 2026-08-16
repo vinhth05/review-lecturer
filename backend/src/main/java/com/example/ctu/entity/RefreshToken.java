@@ -19,7 +19,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -37,8 +36,8 @@ public class RefreshToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 500)
-    private String token;
+    @Column(name = "token_hash", nullable = false, unique = true, length = 64)
+    private String tokenHash;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
@@ -59,9 +58,9 @@ public class RefreshToken {
     @JdbcTypeCode(SqlTypes.TIMESTAMP)
     private Instant rotatedAt;
 
-    public static RefreshToken generate(User user, Instant expiresAt) {
+    public static RefreshToken generate(User user, Instant expiresAt, String tokenHash) {
         return RefreshToken.builder()
-                .token(UUID.randomUUID().toString())
+                .tokenHash(tokenHash)
                 .user(user)
                 .expiresAt(expiresAt)
                 .revoked(false)
