@@ -1,208 +1,119 @@
 # CTU Review Platform
 
-A modern web platform that enables students at Can Tho University (CTU) to review, rate, and provide constructive feedback on lecturers. The platform promotes transparency, helps students make informed course selections, and provides valuable insights for improving teaching quality.
+CTU Review Platform is a Spring Boot and React application for authenticated,
+anonymous lecturer feedback. The system treats moderation, abuse reports and
+sessions as explicit business workflows rather than simple CRUD records.
 
-## Features
+## Core capabilities
 
-- Student authentication using JWT
-- Secure role-based authorization with Spring Security
-- Browse lecturers and courses
-- Submit, edit, and delete lecturer reviews
-- Rating system with average score calculation
-- Search and filter lecturers
-- RESTful API architecture
-- Responsive user interface built with React and Material UI
-- Redis caching for improved performance
-- Kafka integration for asynchronous event processing
+- Student registration, OTP verification and role-based access control.
+- Anonymous lecturer reviews with rate limiting and toxic-content checks.
+- Auditable review moderation: `PENDING -> APPROVED | REJECTED`.
+- Report resolution that preserves evidence: dismiss or reject the review.
+- Optimistic concurrency control on administrative decisions.
+- Rotating, hashed refresh tokens with replay detection and session revocation.
+- Correlation IDs, structured API errors, Actuator health and Prometheus metrics.
+- Flyway-owned SQL Server schema, Redis, Kafka and container health checks.
 
-## Tech Stack
+The detailed design and operational rules are in
+[`docs/ENTERPRISE_ARCHITECTURE.md`](docs/ENTERPRISE_ARCHITECTURE.md).
 
-### Backend
+## Technology
 
-- Java 21
-- Spring Boot 3.x
-- Spring Security
-- JWT Authentication
-- Spring Data JPA (Hibernate)
-- Microsoft SQL Server
-- Redis
-- Apache Kafka
-- Maven
+- Backend: Java 21, Spring Boot 3.4, Spring Security, JPA, Flyway and Maven.
+- Frontend: React 19, Vite, React Router, Axios, Tailwind and shadcn/ui.
+- Infrastructure: SQL Server, Redis, Kafka, Nginx and Docker Compose.
 
-### Frontend
-
-- React 19
-- Vite
-- React Router
-- Material UI (MUI)
-- Axios
-- Context API
-
-### Infrastructure
-
-- Docker
-- Docker Compose
-- SQL Server
-- Redis
-- Apache Kafka
-- Zookeeper
-
----
-
-## Project Structure
+## Repository layout
 
 ```text
 CTU-Review-Platform/
-├── backend/          # Spring Boot REST API
-├── frontend/         # React application
-├── docker-compose.yml
-└── README.md
+|-- backend/          # Spring Boot API and Flyway migrations
+|-- frontend/         # React application and Nginx configuration
+|-- docs/             # Architecture and operational guidance
+`-- docker-compose.yml
 ```
-
----
 
 ## Prerequisites
 
-Before running the project, make sure the following software is installed:
-
-- JDK 21
+- JDK 21 and Maven 3.9+
 - Node.js 20+
-- Maven 3.9+
-- Docker
-- Docker Compose
+- Docker Desktop with Docker Compose
 
----
+## Run with Docker Compose
 
-## Getting Started
+Create a private local environment file first:
 
-### 1. Clone the Repository
-
-```bash
-git clone <repository-url>
-cd CTU-Review-Platform
+```powershell
+Copy-Item .env.example .env
 ```
 
-### 2. Start Infrastructure Services
+Replace every placeholder in `.env`. Compose intentionally fails fast when
+`DB_PASSWORD`, `JWT_SECRET`, or `REVIEW_SECRET_KEY` is missing. Never commit
+the resulting `.env` file.
 
-Start SQL Server, Redis, Kafka, and Zookeeper:
-
-```bash
-docker-compose up -d sqlserver redis zookeeper kafka-broker
+```powershell
+docker compose up --build -d
+docker compose ps
 ```
 
-Wait until all services are fully initialized before starting the backend.
+The frontend is served at `http://localhost`; the backend API is available at
+`http://localhost:8080/api/v1`. The container uses the production profile, so
+Swagger is disabled. Health is available at
+`http://localhost:8080/api/v1/actuator/health`.
 
----
+## Local development
 
-### 3. Run the Backend
+Start the infrastructure after creating `.env`:
 
-```bash
-cd backend
-mvn clean install -DskipTests
+```powershell
+docker compose up -d sqlserver redis zookeeper kafka-broker
+```
+
+Run the backend with the required database/JWT/review environment variables
+provided by your shell or IDE:
+
+```powershell
+Set-Location backend
 mvn spring-boot:run
 ```
 
-Backend API:
+Run the frontend in another terminal:
 
-```
-http://localhost:8080
-```
-
----
-
-### 4. Run the Frontend
-
-```bash
-cd frontend
-npm install
+```powershell
+Set-Location frontend
+npm ci
 npm run dev
 ```
 
-Frontend:
+Swagger is available in the development profile at
+`http://localhost:8080/api/v1/swagger-ui/index.html`.
 
-```
-http://localhost:5173
-```
+Seeded role accounts are disabled by default. Enable `APP_SEED_ENABLED` only
+for local development and provide all account identities and strong passwords
+explicitly.
 
----
+## Verification
 
-## Run the Entire Application with Docker
+```powershell
+Set-Location backend
+mvn clean test
 
-To start the complete application using Docker:
-
-```bash
-docker-compose up -d
-```
-
-Available services:
-
-| Service | URL |
-|---------|-----|
-| Frontend | http://localhost:5173 |
-| Backend API | http://localhost:8080 |
-
----
-
-## API Documentation
-
-After the backend starts successfully:
-
-- Swagger UI:
-  ```
-  http://localhost:8080/swagger-ui/index.html
-  ```
-
-- OpenAPI Specification:
-  ```
-  http://localhost:8080/v3/api-docs
-  ```
-
----
-
-## Development
-
-### Backend
-
-```bash
-cd backend
-mvn spring-boot:run
+Set-Location ../frontend
+npm run lint
+npm run build
 ```
 
-### Frontend
+CI runs the same backend, frontend, acceptance and Compose-model checks. Flyway
+migrations under `backend/src/main/resources/db/migration` are versioned source
+artifacts and must ship with every backend build.
 
-```bash
-cd frontend
-npm run dev
-```
+## Security notes
 
----
+- Supply production secrets through a secret manager; do not reuse keys.
+- Access tokens are accepted only through the `Authorization: Bearer` header.
+- Password changes, resets, account locks and verification changes revoke
+  refresh sessions.
+- Swagger is disabled and Actuator access is restricted in production.
 
-## Security
-
-- JWT-based authentication
-- Password encryption using BCrypt
-- Role-based access control (RBAC)
-- Spring Security protection
-- Stateless REST API
-
----
-
-## Future Improvements
-
-- Lecturer profile analytics
-- Course review system
-- Review moderation
-- Email verification
-- Notification system
-- Admin dashboard
-- Mobile responsive improvements
-
----
-
-## Authors
-
-Developed by the **CTU Review Platform Team**.
----
-## License
-
-This project is intended for educational and academic purposes.
+This repository is intended for educational and academic use.
